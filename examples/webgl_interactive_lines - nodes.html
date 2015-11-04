@@ -115,9 +115,11 @@
 
 
                                 // sprite
-                                var spriteMaterial = new THREE.SpriteMaterial( { map: texture /*, useScreenCoordinates: true, alignment: THREE.SpriteAlignment.topLeft*/ } );
-	
+                                var spriteMaterial = new THREE.SpriteMaterial( { map: texture, color: '0xffffff' /*, useScreenCoordinates: true, alignment: THREE.SpriteAlignment.topLeft*/ } );
+                                //spriteMaterial.program({context: tooltip,  color: new THREE.Color("rgb(255, 0, 0)")});
+                                
                                 sprite = new THREE.Sprite( spriteMaterial );
+                                
                                 sprite.scale.set(200,100,1.0);
                                 sprite.position.set( 50, 50, 0 );
                                 scene.add( sprite );	
@@ -164,8 +166,8 @@
                             mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
                             mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
                                 
-                            sprite.position.set( event.clientX, event.clientY - 20, 0 );
-                                
+                            sprite.position.set( event.clientX, event.clientY , 0 );
+                            
 			}
 
 			//
@@ -180,8 +182,6 @@
 			}
 
 			function render() {
-
-				theta += 0.1;
                                 
 				camera.position.x = radius ;
 				camera.position.y = radius ;
@@ -217,7 +217,7 @@
                                                 tooltip.fillStyle = "rgba(255,255,255,0.95)"; // white filler
                                                 tooltip.fillRect( 2,2, width+4,20+4 );
                                                 tooltip.fillStyle = "rgba(0,0,0,1)"; // text color
-                                                tooltip.fillText( message, 4,20 );
+                                                tooltip.fillText( message, 4, 20 );
                                                 texture.needsUpdate = true;
                                                 
                                                 
