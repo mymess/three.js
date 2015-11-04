@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - interactive lines</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="../build/three.min.js"></script>
+
+		<script src="js/libs/stats.min.js"></script>
+                <script src="models/nodes-data.js"></script>    
+
+		<script>
+
+			var container, stats;
+			var camera, scene, raycaster, renderer, parentTransform, sphereInter;
+
+			var mouse = new THREE.Vector2();
+			var radius = 20, theta = 0;
+
+			var currentIntersected;
+                        var lastIntersected = new THREE.Line();
+                        var selectedMaterial = new THREE.LineBasicMaterial( { color: 0xff0000 } );
+                        var inactiveMaterial = new THREE.LineBasicMaterial( { color: 0xffffff } );
+                        var canvas, tooltip, texture, sprite;
+                        
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				var info = document.createElement( 'div' );
+				info.style.position = 'absolute';
+				info.style.top = '10px';
+				info.style.width = '100%';
+				info.style.textAlign = 'center';
+				info.innerHTML = '<a href="http://threejs.org" target="_blank">three.js</a> webgl - interactive lines';
+				container.appendChild( info );
+
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
+
+				scene = new THREE.Scene();
+
+				var geometry = new THREE.SphereGeometry( 5 );
+				var material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+
+				sphereInter = new THREE.Mesh( geometry, material );
+				sphereInter.visible = false;
+				scene.add( sphereInter );
+
+				var geometry = new THREE.Geometry();
+
+				var point = new THREE.Vector3();
+				var center = new THREE.Vector3(0.0,0.0,0.0);
+                                var nodes = nodesData["nodes"];
+                                var whiteMat = new THREE.LineBasicMaterial({
+                                    color: 0xffffff
+                                });
+		
+                                var r = 25;
+                                
+				parentTransform = new THREE.Object3D();                                
+				for(var node in nodes){
+                                    
+                                        var lat = nodes[node][8]*Math.PI/180.0;
+                                        var lon = -nodes[node][9]*Math.PI/180.0;
+
+					point.x  = r * Math.cos(lat)*Math.cos(lon);
+                                        point.y  = r * Math.sin(lat);
+                                        point.z  = r * Math.cos(lat)*Math.sin(lon);
+
+					var geometry = new THREE.Geometry();
+                                        geometry.vertices.push( center.clone() );
+					geometry.vertices.push( point.clone() );
+                                        
+                                        
+                                        
+                                        var object = new THREE.Line( geometry, whiteMat );
+				        object.name = node;
+                                        parentTransform.add( object );				
+				}
+                                
+
+				scene.add( parentTransform );
+
+				raycaster = new THREE.Raycaster();
+				raycaster.linePrecision = .1;
+
+                                /////////////
+                                // TOOLTIP //
+                                /////////////
+                                // create a canvas element
+                                canvas = document.createElement('canvas');
+                                tooltip = canvas.getContext('2d');
+                                tooltip.font = "Bold 20px Arial";
+                                tooltip.fillStyle = "rgba(0,0,0,0.95)";
+                                tooltip.fillText('Hello, world!', 0, 20);
+
+                                // canvas contents will be used for a texture
+                                texture = new THREE.Texture(canvas) 
+                                texture.needsUpdate = true;
+
+
+                                // sprite
+                                var spriteMaterial = new THREE.SpriteMaterial( { map: texture /*, useScreenCoordinates: true, alignment: THREE.SpriteAlignment.topLeft*/ } );
+	
+                                sprite = new THREE.Sprite( spriteMaterial );
+                                sprite.scale.set(200,100,1.0);
+                                sprite.position.set( 50, 50, 0 );
+                                scene.add( sprite );	
+                                
+
+                                ////////////
+                                // RENDERER
+                                ////////////
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setClearColor( 0x000000 );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild(renderer.domElement);
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+                        
+                        
+                       
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function onDocumentMouseMove( event ) {
+
+                            event.preventDefault();
+
+                            mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+                            mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+                                
+                            sprite.position.set( event.clientX, event.clientY - 20, 0 );
+                                
+			}
+
+			//
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+				stats.update();
+
+			}
+
+			function render() {
+
+				theta += 0.1;
+                                
+				camera.position.x = radius ;
+				camera.position.y = radius ;
+				camera.position.z = radius ;
+				camera.lookAt( new THREE.Vector3(0,0,0) );
+
+                                camera.updateMatrixWorld();
+
+				// find intersections
+
+				raycaster.setFromCamera( mouse, camera );
+
+                                
+                                lastIntersected.material = inactiveMaterial;
+                                
+                                tooltip.clearRect(0,0,300,300);
+				texture.needsUpdate = true;
+                                
+				var intersects = raycaster.intersectObjects( parentTransform.children, true);
+
+				if ( intersects.length > 0 ) {
+                                        currentIntersected = intersects[ 0 ].object;
+					if ( currentIntersected !== undefined ) {
+                                                currentIntersected.material = selectedMaterial;
+                                                
+                                                //TOOLTIP
+                                                tooltip.clearRect(0,0,640,480);
+                                                var message = currentIntersected.name;
+                                                var metrics = tooltip.measureText(message);
+                                                var width = metrics.width;
+                                                tooltip.fillStyle = "rgba(0,0,0,0.95)"; // black border
+                                                tooltip.fillRect( 0,0, width+8,20+8);
+                                                tooltip.fillStyle = "rgba(255,255,255,0.95)"; // white filler
+                                                tooltip.fillRect( 2,2, width+4,20+4 );
+                                                tooltip.fillStyle = "rgba(0,0,0,1)"; // text color
+                                                tooltip.fillText( message, 4,20 );
+                                                texture.needsUpdate = true;
+                                                
+                                                
+                                                //console.log("intersected " + currentIntersected.name);
+					}
+				} 
+                                
+				renderer.render( scene, camera );
+                                lastIntersected = currentIntersected;                                
+			}
+
+		</script>
+
+	</body>
+</html>
