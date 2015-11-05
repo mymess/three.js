@@ -124,7 +124,7 @@
 
 				
 				raycaster = new THREE.Raycaster();
-                                raycaster.linePrecision = .1;
+                                raycaster.linePrecision = 1;
                                 
 				mouse = new THREE.Vector2();
 
@@ -140,12 +140,12 @@
                                 geometry = new THREE.Geometry();
                                 geometry.vertices.push(new THREE.Vector3(0,0,0));
                                 geometry.vertices.push(new THREE.Vector3(0,10,0));
-                                selectedMaterial = new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 2, vertexColors:0x00ff00});
+                                selectedMaterial = new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 20, vertexColors:0x00ff00});
                                 
                                 selectedLine = new THREE.Line(geometry, selectedMaterial);
                                 scene.add(selectedLine);
                                 
-				renderer = new THREE.WebGLRenderer( { antialias: false } );
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setClearColor( scene.fog.color );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -215,8 +215,8 @@
 				if ( intersects.length > 0 ) {
 
 					intersect = intersects[ 0 ];
-                                        
-					selectedLine.geometry.vertices[1] = intersect.point.sub(new THREE.Vector3(0,0,0)).multiplyScalar(r);
+                                        var origin = new THREE.Vector3(0,0,0);
+					selectedLine.geometry.vertices[1] = origin.sub(intersect.point).normalize().multiplyScalar(r);
                                         selectedLine.geometry.needsUpdate = true;
                                         selectedLine.material = selectedMaterial;
                                         
