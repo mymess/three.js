@@ -45,8 +45,9 @@
 
 			var raycaster, mouse;
 
-			var mesh, lines, selectedLine;
-
+			var mesh, lines, selectedLine, r=25;
+                        var selectedMaterial;
+                        
 			init();
 			animate();
 
@@ -73,13 +74,14 @@
 
 				var geometry = new THREE.BufferGeometry();
 
-				var positions = new Float32Array( linesNumber * 3 * 3 );
+				var positions = new Float32Array( linesNumber * 3 * 2 );
 				
 				var colors = new Float32Array( linesNumber * 3 * 2 );
 
 				var color = new THREE.Color();
 
-				var i = 0, nodes = nodesData['nodes'], r = 25; 
+				var i = 0, nodes = nodesData['nodes'];
+                                r = 25; 
                                 
 				for (  var node in nodes ) {
 
@@ -91,17 +93,14 @@
                                         var y  = r * Math.sin(lat);
                                         var z  = r * Math.cos(lat)*Math.sin(lon);                                        					
 					
-					positions[ i ]     = 0;
-					positions[ i + 1 ] = 0;
-					positions[ i + 2 ] = 0;
+					positions[ i ]     = x;
+					positions[ i + 1 ] = y;
+					positions[ i + 2 ] = z;
 
-					positions[ i + 3 ] = x;
-					positions[ i + 4 ] = y;
-					positions[ i + 5 ] = z;
-                                        
-                                        positions[ i + 6 ] = 0;
-					positions[ i + 7 ] = 0;
-					positions[ i + 8 ] = 0;
+					positions[ i + 3 ] = 0;
+					positions[ i + 4 ] = 0;
+					positions[ i + 5 ] = 0;
+                                        ;
 
 					// colors
 
@@ -119,7 +118,7 @@
 					colors[ i + 4 ] = color.r;
 					colors[ i + 5 ] = color.b;
 					
-                                        i +=9;
+                                        i +=6;
 				}
 
 				
@@ -130,16 +129,16 @@
 				var geometry = new THREE.BufferGeometry();
 				geometry.addAttribute( 'position', new THREE.BufferAttribute(positions, 3 ) );
 
-				var material = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2, transparent: false } );
+				var material = new THREE.LineBasicMaterial( { color: 0xdddddd, linewidth: 1, transparent: true } );
 
-				lines = new THREE.Line( geometry, material,  THREE.Line );
+				lines = new THREE.Line( geometry, material,  THREE.Line);
 				scene.add( lines );
 
 				//
                                 geometry = new THREE.Geometry();
                                 geometry.vertices.push(new THREE.Vector3(0,0,0));
-                                geometry.vertices.push(new THREE.Vector3(0,1,0));
-                                var selectedMaterial = new THREE.LineBasicMaterial({color: 0xff0000});
+                                geometry.vertices.push(new THREE.Vector3(0,10,0));
+                                selectedMaterial = new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 25, vertexColors:0x00ff00, transparent: false});
                                 
                                 selectedLine = new THREE.Line(geometry, selectedMaterial);
                                 scene.add(selectedLine);
@@ -202,9 +201,10 @@
 				if ( intersects.length > 0 ) {
 
 					var intersect = intersects[ 0 ];
-					//selectedLine = intersect.object;
-
-					var linePosition = lines.geometry.attributes.position;
+                                        selectedLine.geometry.vertices[0] = new THREE.Vector3(0,0,0);
+					selectedLine.geometry.vertices[1] = intersect.point.sub(new THREE.Vector3(0,0,0)).normalize().multiplyScalar(2*r);
+                                        
+					//var linePosition = lines.geometry.attributes.position;
 					
 
 					//linePosition.copyAt( 0, linePosition, selectedLine.geometry.position );
@@ -212,15 +212,14 @@
 										
 
 					//selectedLine.geometry.applyMatrix( linePosition.matrix );
-
+                                    
 					selectedLine.visible = true;
-
+                                        
+                                        //console.log(selectedLine);
 				} else {
-
-					selectedLine.visible = false;
-
+					//selectedLine.visible = false;
 				}
-
+                                scene.needsUpdate = true;                        
 				renderer.render( scene, camera );
 
 			}
