@@ -30,7 +30,7 @@
 
 			var currentIntersected;
                         var lastIntersected = new THREE.Line();
-                        var selectedMaterial = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 36 } );
+                        var selectedMaterial = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 6 } );
                         var inactiveMaterial = new THREE.LineBasicMaterial( { color: 0xffffff } );
                         var canvas, tooltip, texture, sprite;
                         
@@ -55,7 +55,7 @@
 				scene = new THREE.Scene();
 
 				var geometry = new THREE.SphereGeometry( 5 );
-				var material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+				var material = new THREE.LineBasicMaterial( { color: 0xff0000 } );
 
 				sphereInter = new THREE.Mesh( geometry, material );
 				sphereInter.visible = false;

@@ -46,7 +46,8 @@
 			var raycaster, mouse;
 
 			var mesh, lines, selectedLine, r=25;
-                        var selectedMaterial;
+                        var selectedMaterial, inactiveMaterial;
+                        var myLine, intersect ;
                         
 			init();
 			animate();
@@ -123,22 +124,23 @@
 
 				
 				raycaster = new THREE.Raycaster();
-
+                                raycaster.linePrecision = .1;
+                                
 				mouse = new THREE.Vector2();
 
 				var geometry = new THREE.BufferGeometry();
 				geometry.addAttribute( 'position', new THREE.BufferAttribute(positions, 3 ) );
 
-				var material = new THREE.LineBasicMaterial( { color: 0xdddddd, linewidth: 1, transparent: true } );
+				inactiveMaterial = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 1} );
 
-				lines = new THREE.Line( geometry, material,  THREE.Line);
+				lines = new THREE.Line( geometry, inactiveMaterial );
 				scene.add( lines );
 
 				//
                                 geometry = new THREE.Geometry();
                                 geometry.vertices.push(new THREE.Vector3(0,0,0));
                                 geometry.vertices.push(new THREE.Vector3(0,10,0));
-                                selectedMaterial = new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 25, vertexColors:0x00ff00, transparent: false});
+                                selectedMaterial = new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 2, vertexColors:0x00ff00});
                                 
                                 selectedLine = new THREE.Line(geometry, selectedMaterial);
                                 scene.add(selectedLine);
@@ -149,6 +151,16 @@
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				container.appendChild( renderer.domElement );
 
+
+
+                                //
+                                var buff = new THREE.BufferGeometry();
+                                var vertices = [0, 0, 0,1, 1, 1];
+                                
+                                buff.addAttribute( 'position', new THREE.BufferAttribute(vertices, 3 ) );
+                                myLine = new THREE.Line(buff, new THREE.LineBasicMaterial({color: 0xee0000 }));                                
+                                scene.add(myLine);
+                                
 				//
 
 				stats = new Stats();
@@ -197,31 +209,33 @@
 				raycaster.setFromCamera( mouse, camera );
 
 				var intersects = raycaster.intersectObject( lines );
-
+                                
+                                selectedLine.material = inactiveMaterial;
+                                selectedLine.material.needsUpdate = true;
 				if ( intersects.length > 0 ) {
 
-					var intersect = intersects[ 0 ];
-                                        selectedLine.geometry.vertices[0] = new THREE.Vector3(0,0,0);
-					selectedLine.geometry.vertices[1] = intersect.point.sub(new THREE.Vector3(0,0,0)).normalize().multiplyScalar(2*r);
+					intersect = intersects[ 0 ];
                                         
-					//var linePosition = lines.geometry.attributes.position;
-					
-
-					//linePosition.copyAt( 0, linePosition, selectedLine.geometry.position );
-					//linePosition.copyAt( 1, linePosition, selectedLine.geometry.position );
-										
-
-					//selectedLine.geometry.applyMatrix( linePosition.matrix );
-                                    
-					selectedLine.visible = true;
+					selectedLine.geometry.vertices[1] = intersect.point.sub(new THREE.Vector3(0,0,0)).multiplyScalar(r);
+                                        selectedLine.geometry.needsUpdate = true;
+                                        selectedLine.material = selectedMaterial;
+                                        
+                                        
+                                        myLine.geometry.attributes.position[3] = selectedLine.geometry.vertices[1].x;
+                                        myLine.geometry.attributes.position[4] = selectedLine.geometry.vertices[1].y;
+                                        myLine.geometry.attributes.position[5] = selectedLine.geometry.vertices[1].z;
+                                        myLine.geometry.needsUpdate = true;
+                                        myLine.visible=true;
                                         
                                         //console.log(selectedLine);
 				} else {
-					//selectedLine.visible = false;
+                                        //lines.visible = true;
+					
+                                        //myLine.visible = false;
 				}
-                                scene.needsUpdate = true;                        
+                                                    
 				renderer.render( scene, camera );
-
+                                
 			}
 
 		</script>
