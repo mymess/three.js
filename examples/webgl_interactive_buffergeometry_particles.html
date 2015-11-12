@@ -88,7 +88,24 @@
                                 r = 25; 
                                 
                                 xyzToIP = new Map()
-                                var points = new THREE.Float32Array( linesNumber * 3);
+                                var points = new Float32Array( linesNumber * 3);
+                                
+                                // create the particle variables
+                                var particleCount = nodes.length,
+                                    particles = new THREE.Geometry();// create the particle variables
+
+                                var pMaterial = new THREE.PointsMaterial({
+                                  color: 0xFFFFFF,
+                                  size: 4,
+                                  map: THREE.ImageUtils.loadTexture(
+                                    "images/particle.png"
+                                  ),
+                                  blending: THREE.AdditiveBlending,
+                                  transparent: true,
+                                  depthWrite: false
+                                });
+
+                                
                                 
 				for (  var node in nodes ) {
 
@@ -109,25 +126,28 @@
 					positions[ i + 5 ] = 0;
                                         
                                         xyzToIP.set(new THREE.Vector3(x,y,z), node);
-					// colors
-
-					var vx = Math.random()*255;
-					var vy = Math.random()*255;
-					var vz = Math.random()*255;
-
-					color.setRGB( vx, vy, vz );
-
-					colors[ i ]     = vx;
-					colors[ i + 1 ] = vy;
-					colors[ i + 2 ] = vz;
-
-					colors[ i + 3 ] = vx;
-					colors[ i + 4 ] = vy;
-					colors[ i + 5 ] = vz;
+					
+					//particles
+                                         particle = new THREE.Vector3(x, y, z);
+                                         particle.name = node;
+                                        // add it to the geometry
+                                        particles.vertices.push(particle);
 					
                                         i +=6;
 				}
 
+                                
+
+                                // create the particle system
+                                var particleSystem = new THREE.Points(
+                                    particles,
+                                    pMaterial);
+
+                                particleSystem.sortParticles = true;
+                                
+                                // add it to the scene
+                                scene.add(particleSystem);
+                                
                                 
 				
 				raycaster = new THREE.Raycaster();

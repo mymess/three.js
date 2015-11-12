@@ -72,6 +72,7 @@
 		
                                 var r = 25;
                                 
+                                
 				parentTransform = new THREE.Object3D();                                
 				for(var node in nodes){
                                     
@@ -207,6 +208,7 @@
 					if ( currentIntersected !== undefined ) {
                                                 currentIntersected.material = selectedMaterial;
                                                 
+                                                
                                                 //TOOLTIP
                                                 tooltip.clearRect(0,0,640,480);
                                                 var message = currentIntersected.name;
@@ -221,7 +223,7 @@
                                                 texture.needsUpdate = true;
                                                 
                                                 
-                                                //console.log("intersected " + currentIntersected.name);
+                                                //console.log("Node IP: " + currentIntersected.name);
 					}
 				} 
                                 
