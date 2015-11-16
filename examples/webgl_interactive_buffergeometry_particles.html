@@ -93,7 +93,7 @@
                         var selectedMaterial, inactiveMaterial;
                         var intersect, controls;
                         var xyzToIP, particleSystem;
-                        var IPs, INTERSECTED, particles;
+                        var IPs, INTERSECTED, particles, sprite, context, texture;
                         
 			init();
 			animate();
@@ -207,8 +207,12 @@
                                 // add it to the scene
                                 scene.add( particleSystem );
                                 
-                                
+                                //SPRITE
+                                sprite = makeTextSprite("HOLA MUNDO!!", undefined);
+                                sprite.visible = true;
+                                scene.add( sprite );
 				
+				//raycaster
 				raycaster = new THREE.Raycaster();
                                 raycaster.linePrecision = .1;
                                 
@@ -230,7 +234,7 @@
                                 selectedMaterial = new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 3});
                                 
                                 selectedLine = new THREE.Line(geometry, selectedMaterial);
-                                scene.add(selectedLine);
+                                //scene.add(selectedLine);
                                 
                                 //
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -268,7 +272,9 @@
 			function onDocumentMouseMove( event ) {
 
 				event.preventDefault();
-
+                                
+                                sprite.position.set( event.clientX, event.clientY - 20, 0 );
+				
 				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
@@ -293,6 +299,76 @@
 
 			}
 
+
+                         function makeTextSprite( message, parameters )
+                        {
+                                if ( parameters === undefined ) parameters = {};
+                                var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Arial";
+                                var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
+                                var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
+                                var borderColor = parameters.hasOwnProperty("borderColor") ?parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
+                                var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
+                                var textColor = parameters.hasOwnProperty("textColor") ?parameters["textColor"] : { r:0, g:0, b:0, a:1.0 };
+
+                                var canvas = document.createElement('canvas');
+                                context = canvas.getContext('2d');
+                                context.font = "Bold " + fontsize + "px " + fontface;
+                                var metrics = context.measureText( message );
+                                var textWidth = metrics.width;
+
+                                context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + "," + backgroundColor.b + "," + backgroundColor.a + ")";
+                                context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + "," + borderColor.b + "," + borderColor.a + ")";
+
+                                context.lineWidth = borderThickness;
+                                //roundRect(context, borderThickness/2, borderThickness/2, (textWidth + borderThickness) * 1.1, fontsize * 1.4 + borderThickness, 8);
+                                roundRect(context, borderThickness/2, borderThickness/2, 512, 256, 8);
+                                
+                                context.fillStyle = "rgba("+textColor.r+", "+textColor.g+", "+textColor.b+", 1.0)";
+                                context.fillText( message, borderThickness, fontsize + borderThickness);
+
+                                texture = new THREE.Texture(canvas) 
+                                texture.needsUpdate = true;
+
+                                var spriteMaterial = new THREE.SpriteMaterial( { map: texture } );
+                                spriteMaterial.map.offset.set( -0.5, -0.5 );
+                                spriteMaterial.needsUpdate = true;
+                                sprite = new THREE.Sprite( spriteMaterial );
+                                
+                                sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
+                                return sprite;  
+                        }
+
+	
+                        function roundRect(ctx, x, y, w, h, r) { 
+                            ctx.beginPath(); 
+                            ctx.moveTo(x + r, y); 
+                            ctx.lineTo(x + w - r, y); 
+                            ctx.quadraticCurveTo(x + w, y, x + w, y + r); 
+                            ctx.lineTo(x + w, y + h - r); 
+                            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); 
+                            ctx.lineTo(x + r, y + h); 
+                            ctx.quadraticCurveTo(x, y + h, x, y + h - r); 
+                            ctx.lineTo(x, y + r); 
+                            ctx.quadraticCurveTo(x, y, x + r, y); 
+                            ctx.closePath(); 
+                            ctx.fill(); 
+                            ctx.stroke(); 
+                        }
+    
+    
+                        function getNodeInfo(ip){
+                            var nodes = nodesData['nodes'];                            
+                            var node = nodes[ip]
+                            
+                            //"86.107.110.50:8333": [70002, "/Satoshi:0.11.1/", 1446012293, 1, 381210, "86.107.110.50", null, "RO", 46.0, 25.0, "Europe/Bucharest", "AS8708", "RCS & RDS SA"]
+                            var s = "IP: " + ip ;
+                            //s+= "<p><b>Version:</b>" + node[0] +"</p>";
+                            //s+= "<p><b>Name:</b>" + node[1] +"</p>";
+                            
+                            
+                            return s;
+                        }
+    
 			function render() {
                                 if (enableRaycaster){
                                     
@@ -312,12 +388,38 @@
                                         
                                             intersect = intersects[ 0 ];
                                             INTERSECT = intersect.index;
-                                            console.log(IPs[INTERSECT])
+                                            //console.log(IPs[INTERSECT])
                                             
                                             var origin = new THREE.Vector3(0,0,0);
                                             //selectedLine.geometry.vertices[0] = origin;
                                             //var v = intersect.point.sub(origin).normalize().multiplyScalar(r);
                                             //selectedLine.geometry.vertices[1] = v;
+                                            
+                                            
+                                            context.clearRect(0,0,640,480);
+                                            var message = getNodeInfo(IPs[INTERSECT]);
+                                            
+                                            var metrics = context.measureText(message);
+                                            var width = metrics.width;
+                                            sprite = makeTextSprite(message, undefined);
+                                            sprite.visible = true;
+                                            
+                                            
+                                            
+                                            //console.log(message + "  " + width);
+                                            context.fillStyle = "rgba(0,0,0,0.95)"; // black border
+                                            context.fillRect( 0,0, 256,128);
+                                            context.fillStyle = "rgba(255,255,255,0.95)"; // white filler
+                                            context.fillRect( 2,2, width+4,20+4 );
+                                            context.fillStyle = "rgba(0,0,0,1)"; // text color
+                                            context.fillText( message, 4,20 );
+                                            context.canvas.textContent = message;
+                                            
+                                            //context.canvas.innerHTML = message;
+                                            context.canvas.needsUpdate = true;
+                                            sprite.material.needsUpdate = true;
+                                            texture.needsUpdate = true;
+                                            
                                             
                                             
                                             
@@ -333,8 +435,9 @@
                                         
                                                                                                                                                                
                                     } else {
-                                            //selectedMaterial.material = inactiveMaterial;
-                                            
+                                            //context.clearRect(0,0,300,300);
+                                            //sprite.visible= false;
+                                            //texture.needsUpdate = true;                                            
                                     }
                                 }
 				renderer.render( scene, camera );
