@@ -133,7 +133,7 @@
 				var geometry = new THREE.BufferGeometry();
 
 				var positions = new Float32Array( linesNumber * 3 * 2 );
-                                var sizes = new Float32Array( linesNumber );
+				var sizes = new Float32Array( linesNumber );
                                 
 				var i = 0, nodes = nodesData['nodes'];
                 r = 25; 
@@ -170,8 +170,10 @@
 					alphaTest: 0.9,
 
 				} );                                
-                                var j = 0;
-                                IPs = [];
+                
+				var j = 0;
+                IPs = [];
+				
 				for (  var node in nodes ) {
 
 					// positions
@@ -199,7 +201,7 @@
                     // add it to the geometry
                     particles.vertices.push(particle);
 					sizes[j++] = 20;
-                                        i +=6;
+                    i +=6;
 				}
 
                                 
@@ -222,7 +224,6 @@
                 sprite = makeTextSprite("HOLA MUNDO!! ", undefined);
 
                 sceneOrtho.add( sprite );
-				scene.add(sprite);
 				
 				//raycaster
 				raycaster = new THREE.Raycaster();
