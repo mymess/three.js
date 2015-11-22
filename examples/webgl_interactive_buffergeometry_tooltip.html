@@ -133,7 +133,7 @@
 				var geometry = new THREE.BufferGeometry();
 
 				var positions = new Float32Array( linesNumber * 3 * 2 );
-				var sizes = new Float32Array( linesNumber );
+                                var sizes = new Float32Array( linesNumber );
                                 
 				var i = 0, nodes = nodesData['nodes'];
                 r = 25; 
@@ -170,10 +170,8 @@
 					alphaTest: 0.9,
 
 				} );                                
-                
-				var j = 0;
-                IPs = [];
-				
+                                var j = 0;
+                                IPs = [];
 				for (  var node in nodes ) {
 
 					// positions
@@ -201,7 +199,7 @@
                     // add it to the geometry
                     particles.vertices.push(particle);
 					sizes[j++] = 20;
-                    i +=6;
+                                        i +=6;
 				}
 
                                 
@@ -224,6 +222,7 @@
                 sprite = makeTextSprite("HOLA MUNDO!! ", undefined);
 
                 sceneOrtho.add( sprite );
+				
 				
 				//raycaster
 				raycaster = new THREE.Raycaster();
@@ -290,20 +289,20 @@
 
 				event.preventDefault();
                                 
-                sprite.position.set( event.clientX, event.clientY - 20, 0 );
+                sprite.position.set( event.clientX -window.innerWidth/2, -event.clientY + window.innerHeight/2, 1 );
 
 				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
 			}
 
-                        function onDocumentMouseDown(event){
-                            enableRaycaster = false;
-                        }
+            function onDocumentMouseDown(event){
+                enableRaycaster = false;
+            }
 
-                        function onDocumentMouseUp(){
-                            enableRaycaster = true;
-                        }
+            function onDocumentMouseUp(){
+                enableRaycaster = true;
+            }
 
 			//
 
@@ -319,33 +318,42 @@
             {
                     if ( parameters === undefined ) parameters = {};
                     var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Arial";
-                    var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
-                    var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
+                    var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 20;
+                    var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 1;
                     var borderColor = parameters.hasOwnProperty("borderColor") ?parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
                     var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
                     var textColor = parameters.hasOwnProperty("textColor") ?parameters["textColor"] : { r:0, g:0, b:0, a:1.0 };
 
                     var canvas = document.createElement('canvas');
                     context = canvas.getContext('2d');
-                    context.font = "Bold " + fontsize + "px " + fontface;
-                    var metrics = context.measureText( message );
-                    var textWidth = metrics.width;
+	                context.font = "Bold " + fontsize + "px " + fontface;
+	                var metrics = context.measureText(message);
+	                var textWidth = metrics.width;
+				
+					// setting canvas width/height before ctx draw, else canvas is empty
+		            canvas.width = textWidth+ borderThickness*2;
+		            canvas.height = fontsize* window.innerWidth / window.innerHeight + borderThickness*2;
+				
+					console.log("width " + metrics.width);
+					console.log("height " + fontsize);
 
-                    context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + "," + backgroundColor.b + "," + backgroundColor.a + ")";
-                    context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + "," + borderColor.b + "," + borderColor.a + ")";
+	                context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + "," + backgroundColor.b + "," + backgroundColor.a + ")";
+	                context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + "," + borderColor.b + "," + borderColor.a + ")";
 
-                    context.lineWidth = borderThickness;
-                    //roundRect(context, borderThickness/2, borderThickness/2, (textWidth + borderThickness) * 1.1, fontsize * 1.4 + borderThickness, 8);
-                    roundRect(context, borderThickness/2, borderThickness/2, 512, 256, 8);
-                    
-                    context.fillStyle = "rgba("+textColor.r+", "+textColor.g+", "+textColor.b+", 1.0)";
-                    context.fillText( message, borderThickness, fontsize + borderThickness);
+	                context.lineWidth = borderThickness;
+	                //roundRect(context, borderThickness/2, borderThickness/2, (textWidth + borderThickness) * 1.1, fontsize * 1.4 + borderThickness, 8);
+
+	                roundRect(context, borderThickness/2, borderThickness/2, canvas.width, canvas.height, 4);
+					
+					
+	                context.fillStyle = "rgba("+textColor.r+", "+textColor.g+", "+textColor.b+", 1.0)";
+	                context.fillText( message, borderThickness, fontsize + borderThickness);
 
                     texture = new THREE.Texture(canvas) 
                     texture.needsUpdate = true;
-
+					texture.minFilter = THREE.NearestFilter;
                     var spriteMaterial = new THREE.SpriteMaterial( { map: texture, fog: true } );
-                    spriteMaterial.map.offset.set( -0.5, -0.5 );
+                    //spriteMaterial.map.offset.set( -0.5, -0.5 );
                     spriteMaterial.needsUpdate = true;
                     sprite = new THREE.Sprite( spriteMaterial );
                     
@@ -411,7 +419,7 @@
                                         //selectedLine.geometry.vertices[1] = v;
                                         
                                         
-                                        context.clearRect(0, 0, 640, 480);
+                                        //context.clearRect(0, 0, 640, 480);
                                         var message = getNodeInfo( IPs[INTERSECT] );
                                         console.log(message);
 																				
@@ -424,10 +432,11 @@
 										context.fillRect( 2,2, width+4,20+4 );
 										context.fillStyle = "rgba(0,0,0,1)"; // text color
 										context.fillText( message, 0,0 );
-										//sprite.material.needsUpdate = true;
-										//texture.needsUpdate = true;
-                                         
-                                            
+                                        
+
+										
+                                        texture.needsUpdate = true;
+										
                                         /*
                                         selectedLine.geometry.vertices[1].x = v.x;
                                         selectedLine.geometry.vertices[1].y = v.y;
@@ -445,6 +454,14 @@
                                     }
                                 }
 								
+								sceneOrtho.children.forEach(function (e) {
+					                if (e instanceof THREE.Sprite) {
+					                    e.position.x = sprite.position.x;
+										e.position.y = sprite.position.y;
+
+					                }
+					            });
+
 
 				//renderer.render( scene, camera );
                 
