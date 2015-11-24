@@ -12,18 +12,24 @@
 				overflow:hidden;
 			}
 		</style>
+                
+                <link rel="stylesheet" href="js/qtip-tooltip/jquery.qtip.css">
+                
 	</head>
 
 	<body>
 		<script src="../build/three.min.js"></script>
-
+                
+                <script src="js/jquery/jquery-2.1.4.js"></script>
+                <script src="js/qtip-tooltip/jquery.qtip.js"></script>
+		
 		<script>
 
 			var camera, scene, renderer;
 			var cameraOrtho, sceneOrtho;
 			var mouse;
 			var spriteTL, spriteTR, spriteBL, spriteBR, spriteC;
-			var context;
+			var context, tooltip;
 			var mapC;
 
 			var group;
@@ -100,8 +106,23 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.autoClear = false; // To allow render overlay on top of sprited sphere
-
+                                
+                                
 				document.body.appendChild( renderer.domElement );
+                                
+                                //QTIP TOOLTIP
+                                renderer.domElement.id = "gfx";
+                                tooltip = $("#gfx").qtip({
+                                    content: {
+                                        title: "Titulo",
+                                        text: 'My common piece of text here'
+                                    },                                    
+                                    position: {
+                                        target: "mouse"
+                                    },
+                                    style: { classes: 'qtip-bootstrap' }
+                                                                                             
+                                });
 
 				//
 
@@ -115,7 +136,7 @@
 
 				event.preventDefault();
 				
-                spriteC.position.set( event.clientX -window.innerWidth/2, -event.clientY + window.innerHeight/2, 1 );
+                                //spriteC.position.set( event.clientX -window.innerWidth/2, -event.clientY + window.innerHeight/2, 1 );
 
 
 				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -144,7 +165,7 @@
                 var textColor =  { r:0, g:0, b:0, a:1.0 };
 				
 				
-				var message = "Hola mundo cruel!!";
+				var message = "Hola mundo\n cruel!!";
 				
                 var canvas = document.createElement('canvas');
                 context = canvas.getContext('2d');
@@ -266,17 +287,23 @@
 					}
 
 				}
-				
-				
-				sceneOrtho.children.forEach(function (e) {
+
+                                var qapi = $('#gfx').data('qtip')
+                                
+                                 var newtip = "X: "+ mouse.x + "  Y: "+ mouse.y;
+                                qapi.options.content.text = "X: "+ mouse.x + "  Y: "+ mouse.y;
+				tooltip.position.target = [mouse.x, mouse.y];
+                                qapi.elements.content.text(newtip); // update visible tooltip content
+                                //qapi.redraw(); // redraw to adjust tooltip borders
+                                
+				/*sceneOrtho.children.forEach(function (e) {
 				                if (e instanceof THREE.Sprite) {
 				                    e.position.x = spriteC.position.x;
 									e.position.y = spriteC.position.y;
 									e.position.needsUpdate = true;
 				                }
 				            });
-				
-
+				*/
 				
 				
 				group.rotation.x = time * 0.5;
@@ -286,7 +313,7 @@
 				renderer.clear();
 				renderer.render( scene, camera );
 				//renderer.clearDepth();
-				renderer.render( sceneOrtho, cameraOrtho );
+				//renderer.render( sceneOrtho, cameraOrtho );
 
 			}
 
