@@ -47,13 +47,13 @@
 				camera = new THREE.PerspectiveCamera( 60, width / height, 1, 2100 );
 				camera.position.z = 1500;
 
-				cameraOrtho = new THREE.OrthographicCamera( - width / 2, width / 2, height / 2, - height / 2, 1, 10 );
-				cameraOrtho.position.z = 10;
+				//cameraOrtho = new THREE.OrthographicCamera( - width / 2, width / 2, height / 2, - height / 2, 1, 10 );
+				//cameraOrtho.position.z = 10;
 
 				scene = new THREE.Scene();
 				scene.fog = new THREE.Fog( 0x000000, 1500, 2100 );
 
-				sceneOrtho = new THREE.Scene();
+				//sceneOrtho = new THREE.Scene();
 
 				// create sprites
 
@@ -290,12 +290,13 @@
 
                                 var qapi = $('#gfx').data('qtip')
                                 
-                                 var newtip = "X: "+ mouse.x + "  Y: "+ mouse.y;
-                                qapi.options.content.text = "X: "+ mouse.x + "  Y: "+ mouse.y;
-				tooltip.position.target = [mouse.x, mouse.y];
-                                qapi.elements.content.text(newtip); // update visible tooltip content
-                                //qapi.redraw(); // redraw to adjust tooltip borders
                                 
+                                var newtip = "<i>X</i>: "+ mouse.x+ " <p> <u>Y:</u> "+ mouse.y+"</p>";
+                                
+				tooltip.position.target = [mouse.x, mouse.y];
+                                qapi.elements.content.html(newtip); // update visible tooltip content
+                                //qapi.set('content.text', newtip);
+                                //qapi.set('position.target', [mouse.x, mouse.y]);
 				/*sceneOrtho.children.forEach(function (e) {
 				                if (e instanceof THREE.Sprite) {
 				                    e.position.x = spriteC.position.x;
