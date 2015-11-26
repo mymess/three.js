@@ -48,7 +48,7 @@
 			attribute vec3 customColor;
 
 			varying vec3 vColor;
-
+			varying vec3 vNormal;
 			void main() {
 
 				vColor = customColor;
@@ -58,7 +58,7 @@
 				gl_PointSize = size * ( 300.0 / length( mvPosition.xyz ) );
 
 				gl_Position = projectionMatrix * mvPosition;
-
+                                vNormal = gl_Position;
 			}
 
 		</script>
@@ -69,7 +69,8 @@
 			uniform sampler2D texture;
 
 			varying vec3 vColor;
-
+                        varying vec3 vNormal;
+                        
 			void main() {
 
 				gl_FragColor = vec4( color * vColor, 1.0 );
@@ -226,10 +227,24 @@
                 scene.add( group );
                 
                 
+                //Earth
+                var sphereGeometry = new THREE.SphereGeometry(r, 60, 60);
+                
+                 // 4096 is the maximum width for maps
+                var earthTexture = THREE.ImageUtils.loadTexture("textures/planets/earthmap10k.jpg");
+
+                var earthMaterial = new THREE.MeshPhongMaterial();
+                earthMaterial.map = earthTexture;
+
+                var earthMesh = new THREE.Mesh(sphereGeometry, earthMaterial);
+                earthMesh.name = 'earth';
+                //scene.add(earthMesh);
+                
+                
 				
                 //raycaster
                 raycaster = new THREE.Raycaster();
-                raycaster.linePrecision = .01;
+                raycaster.linePrecision = .1;
                 
                 mouse = new THREE.Vector2();
 
@@ -269,7 +284,9 @@
                     position: {
                         target: "mouse"
                     },
-                    style: { classes: 'qtip-bootstrap' },
+                    style: { 
+                        classes: 'qtip-bootstrap'                        
+                     },
                     show: { when : false }// never show unless explicitly called
                                                                              
                 });
@@ -353,21 +370,21 @@
                 ASN
                 Organization name
                 */
-                //"86.107.110.50:8333": [70002, "/Satoshi:0.11.1/", 1446012293, 1, 381210, "86.107.110.50", null, "RO", 46.0, 25.0, "Europe/Bucharest", "AS8708", "RCS & RDS SA"]
+                //"86.107.110.50:8333": [70002, "/Satoshi:0.11.1/", 1.446.012.293, 1, 381210, "86.107.110.50", null, "RO", 46.0, 25.0, "Europe/Bucharest", "AS8708", "RCS & RDS SA"]
                 var s = "<p><b>IP</b>: " + ip +"</p>";
-                s+= "<p>Version:" + node[0] +"</p>";
-                s+= "<p>User agent:" + node[1] +"</p>";
-                s+= "<p>Connected since:" + new Date(node[2]) +"</p>";
-                s+= "<p>Services:" + node[3] +"</p>";
-                s+= "<p>Height:" + node[4] +"</p>";
-                s+= "<p>Hostname:" + node[5] +"</p>";
-                s+= "<p>City:" + node[6] +"</p>";
-                s+= "<p>Country code:" + node[7] +"</p>";
-                s+= "<p>Latitude:" + node[8] +"</p>";
-                s+= "<p>Longitude:" + node[9] +"</p>";
-                s+= "<p>Timezone:" + node[10] +"</p>";
-                s+= "<p>ASN:" + node[11] +"</p>";
-                s+= "<p>Organization name:" + node[12] +"</p>";
+                s+= "<p><b>Version</b>: " + node[0] +"</p>";
+                s+= "<p><b>User agent</b>: " + node[1] +"</p>";
+                s+= "<p><b>Connected since</b>: " + new Date(node[2]*1000) +"</p>";
+                s+= "<p><b>Services</b>: " + node[3] +"</p>";
+                s+= "<p><b>Height</b>: " + node[4] +"</p>";
+                s+= "<p><b>Hostname</b>: " + node[5] +"</p>";
+                s+= "<p><b>City</b>: " + node[6] +"</p>";
+                s+= "<p><b>Country code</b>: " + node[7] +"</p>";
+                s+= "<p><b>Latitude</b>: " + node[8] +"</p>";
+                s+= "<p><b>Longitude</b>: " + node[9] +"</p>";
+                s+= "<p><b>Timezone</b>: " + node[10] +"</p>";
+                s+= "<p><b>ASN</b>: " + node[11] +"</p>";
+                s+= "<p><b>ISP: " + node[12] +"</p>";
                 return s;
             }
     

@@ -35,6 +35,12 @@
 		<script src="js/libs/stats.min.js"></script>
                 <script src="js/controls/OrbitControls.js"></script>
                 
+                <script src="js/libs/EffectComposer.js"></script>
+                <script src="js/libs/RenderPass.js"></script>
+                <script src="js/libs/CopyShader.js"></script>
+                <script src="js/libs/ShaderPass.js"></script>
+                <script src="js/libs/MaskPass.js"></script>
+                
                 <script src="models/nodes-data.js"></script>    
                 
 		<script>
@@ -45,6 +51,8 @@
 
 			var camera, scene, renderer;
 
+                        var cameraBG, composer, sceneBG;                        
+                        
 			var raycaster, mouse, enableRaycaster = true;
 
 			var mesh, lines, selectedLine, r=25;
@@ -72,6 +80,17 @@
 				scene.add( new THREE.AmbientLight( 0x444444 ) );
 
 
+                                // add sunlight (light
+                                var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                                directionalLight.position = new THREE.Vector3(100,100, 100);
+                                directionalLight.name='directional';
+                                scene.add(directionalLight);
+
+				
+				
+				
+				
+				
 				//
 
 				var linesNumber = nodesData['total_nodes'];
@@ -87,8 +106,8 @@
 				var i = 0, nodes = nodesData['nodes'];
                                 r = 25; 
                                 
-                                xyzToIP = new Map()
-                                var points = new THREE.Float32Array( linesNumber * 3);
+                                
+                                var points = new Float32Array( linesNumber * 3);
                                 
 				for (  var node in nodes ) {
 
@@ -100,15 +119,15 @@
                                         var y  = r * Math.sin(lat);
                                         var z  = r * Math.cos(lat)*Math.sin(lon);                                        					
 					
-					positions[ i ]     = x;
-					positions[ i + 1 ] = y;
-					positions[ i + 2 ] = z;
+					positions[ i ]     = 1.01*x;
+					positions[ i + 1 ] = 1.01*y;
+					positions[ i + 2 ] = 1.01*z;
 
 					positions[ i + 3 ] = 0;
 					positions[ i + 4 ] = 0;
 					positions[ i + 5 ] = 0;
                                         
-                                        xyzToIP.set(new THREE.Vector3(x,y,z), node);
+                                
 					// colors
 
 					var vx = Math.random()*255;
@@ -153,12 +172,58 @@
                                 selectedLine = new THREE.Line(geometry, selectedMaterial);
                                 scene.add(selectedLine);
                                 
+                                //Earth
+                                var sphereGeometry = new THREE.SphereGeometry(r, 60, 60);
+                                
+                                 // 4096 is the maximum width for maps
+                                var earthTexture = THREE.ImageUtils.loadTexture("textures/planets/earthmap4k.jpg");
+
+                                var earthMaterial = new THREE.MeshPhongMaterial();
+                                earthMaterial.map = earthTexture;
+
+                                var earthMesh = new THREE.Mesh(sphereGeometry, earthMaterial);
+                                earthMesh.name = 'earth';
+                                scene.add(earthMesh);
+
+                                
+                                
+                                
                                 //
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setClearColor( scene.fog.color );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				container.appendChild( renderer.domElement );
+                                
+                                
+                                
+                                
+                                // add background using a camera
+                                cameraBG = new THREE.OrthographicCamera(-window.innerWidth, window.innerWidth, window.innerHeight, -window.innerHeight, -10000, 10000);
+                                cameraBG.position.z = 50;
+                                sceneBG = new THREE.Scene();
+
+                                var materialColor = new THREE.MeshBasicMaterial({ map: THREE.ImageUtils.loadTexture("textures/planets/starry_background.jpg"), depthTest: false });
+                                var bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), materialColor);
+                                bgPlane.position.z = -100;
+                                bgPlane.scale.set(window.innerWidth * 2, window.innerHeight * 2, 1);
+                                sceneBG.add(bgPlane);
+
+                                // setup the composer steps
+                                // first render the background
+                                var bgPass = new THREE.RenderPass(sceneBG, cameraBG);
+                                // next render the scene (rotating earth), without clearing the current output
+                                var renderPass = new THREE.RenderPass(scene, camera);
+                                renderPass.clear = false;
+                                // finally copy the result to the screen
+                                var effectCopy = new THREE.ShaderPass(THREE.CopyShader);
+                                effectCopy.renderToScreen = true;
+
+                                // add these passes to the composer
+                                composer = new THREE.EffectComposer(renderer);
+                                composer.addPass(bgPass);
+                                composer.addPass(renderPass);
+                                composer.addPass(effectCopy);
                                 
 				//
 
@@ -229,10 +294,10 @@
                                             intersect = intersects[ 0 ];
                                             var origin = new THREE.Vector3(0,0,0);
                                             selectedLine.geometry.vertices[0] = origin;
-                                            var v = intersect.point.sub(origin).normalize().multiplyScalar(r);
+                                            var v = intersect.point.sub(origin).normalize().multiplyScalar(1.06*r);
                                             selectedLine.geometry.vertices[1] = v;
                                             
-                                            console.log( xyzToIP.get( v ));
+                                            
                                             
                                             /*
                                             selectedLine.geometry.vertices[1].x = v.x;
@@ -250,7 +315,8 @@
                                     }
                                 }
 				renderer.render( scene, camera );
-                                
+                                renderer.autoClear = false;
+                                composer.render();
 			}
 
 		</script>
