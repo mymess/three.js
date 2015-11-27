@@ -5,6 +5,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
+		
 			body {
 				color: #cccccc;
 				font-family:Monospace;
@@ -22,7 +23,7 @@
 				padding: 5px;
 			}
 		
-
+		
 		</style>
 	</head>
 	<body>
@@ -289,7 +290,7 @@
                                     
                                     selectedLine.visible = false;
                                     
-                                    if ( intersects.length > 0 ) {
+                                    if ( intersects.length > 0 && intersects[0].point.length()>=r ) {
 
                                             intersect = intersects[ 0 ];
                                             var origin = new THREE.Vector3(0,0,0);
