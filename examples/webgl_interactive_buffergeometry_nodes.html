@@ -25,6 +25,8 @@
 		
 		
 		</style>
+		<link rel="stylesheet" href="js/qtip-tooltip/jquery.qtip.css">
+
 	</head>
 	<body>
 
@@ -34,15 +36,18 @@
 
 		<script src="js/Detector.js"></script>
 		<script src="js/libs/stats.min.js"></script>
-                <script src="js/controls/OrbitControls.js"></script>
+        <script src="js/controls/OrbitControls.js"></script>
+        
+        <script src="js/libs/EffectComposer.js"></script>
+        <script src="js/libs/RenderPass.js"></script>
+        <script src="js/libs/CopyShader.js"></script>
+        <script src="js/libs/ShaderPass.js"></script>
+        <script src="js/libs/MaskPass.js"></script>
                 
-                <script src="js/libs/EffectComposer.js"></script>
-                <script src="js/libs/RenderPass.js"></script>
-                <script src="js/libs/CopyShader.js"></script>
-                <script src="js/libs/ShaderPass.js"></script>
-                <script src="js/libs/MaskPass.js"></script>
-                
-                <script src="models/nodes-data.js"></script>    
+        <script src="models/nodes-data.js"></script>    
+
+        <script src="js/jquery/jquery-2.1.4.js"></script>
+        <script src="js/qtip-tooltip/jquery.qtip.js"></script>
                 
 		<script>
 
@@ -58,7 +63,9 @@
 
 			var mesh, lines, selectedLine, earthRadius=25;
             var selectedMaterial, inactiveMaterial;
-            var intersect, controls;
+            var intersect, controls, INTERSECTED, IPs;
+
+            var qapi, tooltip;
                         
                         
 			init();
@@ -101,10 +108,12 @@
 				var color = new THREE.Color();
 
 				var i = 0, nodes = nodesData['nodes'];
-                                earthRadius = 25; 
+                earthRadius = 25; 
                                 
-                                
-                                var points = new Float32Array( linesNumber * 3);
+                
+                IPs = [];
+
+                var points = new Float32Array( linesNumber * 3);
                                 
 				for (  var node in nodes ) {
 
@@ -124,7 +133,9 @@
 					positions[ i + 4 ] = 0;
 					positions[ i + 5 ] = 0;
                                         
-                                
+                    
+					IPs.push( node );
+
 					// colors
 
 					var vx = Math.random()*255;
@@ -147,7 +158,7 @@
                                 
 				
 				raycaster = new THREE.Raycaster();
-                                raycaster.linePrecision = .1;
+                raycaster.linePrecision = .05;
                                 
 				mouse = new THREE.Vector2();
 
@@ -218,6 +229,25 @@
                 composer.addPass(bgPass);
                 composer.addPass(renderPass);
                 composer.addPass(effectCopy);
+
+
+				// QTIP TOOLTIP
+                renderer.domElement.id = "gfx";
+                tooltip = $("#gfx").qtip({
+                    content: {
+                        title: "",
+                        text: ''
+                    },                                    
+                    position: {
+                        target: "mouse"
+                    },
+                    style: { classes: 'qtip-bootstrap' }
+                                                                             
+                });
+
+				qapi = $('#gfx').data('qtip');
+                                
+
                                 
 				//
 
@@ -265,7 +295,7 @@
 			//
 
 			function animate() {
-                                render();
+                render();
 				requestAnimationFrame( animate );
 
 				
@@ -273,8 +303,47 @@
 
 			}
 
+
+			function getNodeInfo(ip){
+                var nodes = nodesData['nodes'];                            
+                var node = nodes[ip];
+                console.log( ip + " " +node );
+                
+                /*
+                Protocol version
+                User agent
+                Connected since
+                Services
+                Height
+                Hostname
+                City
+                Country code
+                Latitude
+                Longitude
+                Timezone
+                ASN
+                Organization name
+                */
+                //"86.107.110.50:8333": [70002, "/Satoshi:0.11.1/", 1.446.012.293, 1, 381210, "86.107.110.50", null, "RO", 46.0, 25.0, "Europe/Bucharest", "AS8708", "RCS & RDS SA"]
+                var s = "<p><b>IP</b>: " + ip +"</p>";
+                s+= "<b>Version</b>: " + node[0] +"</br>";
+                s+= "<b>User agent</b>: " + node[1] +"</br>";
+                s+= "<b>Connected since</b>: " + new Date(node[2]*1000) +"</br>";
+                s+= "<b>Services</b>: " + node[3] +"</br>";
+                s+= "<b>Height</b>: " + node[4] +"</br>";
+                s+= "<b>Hostname</b>: " + node[5] +"</br>";
+                s+= "<b>City</b>: " + node[6] +"</br>";
+                s+= "<b>Country code</b>: " + node[7] +"</br>";
+                s+= "<b>Latitude</b>: " + node[8] +"</br>";
+                s+= "<b>Longitude</b>: " + node[9] +"</br>";
+                s+= "<b>Timezone</b>: " + node[10] +"</br>";
+                s+= "<b>ASN</b>: " + node[11] +"</br>";
+                s+= "<b>ISP</b>: " + node[12] +"</br>";
+                return s;
+            }
+
 			function render() {
-                if (enableRaycaster){
+                
                     raycaster.setFromCamera( mouse, camera );
                 
                     var intersects = raycaster.intersectObject( lines );
@@ -282,15 +351,36 @@
                     //selectedLine.material = inactiveMaterial;
                     
                     selectedLine.visible = false;
-                    
-                    if ( intersects.length > 0 && intersects[0].point.length()>=earthRadius ) {
+                    /*
+                    if( intersects.length == 0 || intersects.length > 0 
+                    	&& intersects[0].point.length()<earthRadius){
+                         $("#gfx").qtip("hide");                        
+                    } else 
+                    */
+                    if ( intersects.length > 0 && 
+                    			intersects[0].point.z > 0 &&
+                    			//intersects[0].index != INTERSECTED && 
+                    				intersects[0].point.length()>=earthRadius ) {
 
                             intersect = intersects[ 0 ];
+ 							INTERSECTED = intersect.index;
+
                             var origin = new THREE.Vector3(0,0,0);
                             selectedLine.geometry.vertices[0] = origin;
-                            var v = intersect.point.sub(origin).normalize().multiplyScalar(1.06*earthRadius);
+                            var v = intersect.point.sub(origin).normalize().multiplyScalar(1.16*earthRadius);
                             selectedLine.geometry.vertices[1] = v;
                             
+                            if( IPs[INTERSECTED] != undefined){
+
+
+	                            var message = getNodeInfo( IPs[INTERSECTED] );
+
+	                            qapi.elements.content.html(message); 					
+	                                $("#gfx").qtip("show");								
+	                         /*   if($('.qtip:visible').length == 0){
+	                                $("#gfx").qtip("show");
+	                            }*/
+	                        }
                             
                             
                             /*
@@ -303,13 +393,21 @@
                             selectedLine.material = selectedMaterial;
                             selectedLine.visible = true;
                                                                                                                                                
-                    } else {
-                            selectedMaterial.material = inactiveMaterial;
-                            
-                    }
-                }
+                    } else if(intersects.length == 0 || intersects.length > 0 && intersects[0].point.length() < earthRadius ){
+                    	if($('.qtip:visible').length > 0){
+                    	 $("#gfx").qtip("hide");           
+                    	 }             
+                    } 
+                    /*else{
+                    	if($('.qtip:visible').length == 0){
+                    	 $("#gfx").qtip("show");           
+                    	 }             
+                    }*/
+                
+
+                renderer.clear();
 				renderer.render( scene, camera );
-                renderer.autoClear = false;
+                //renderer.autoClear = false;
                 composer.render();
 			}
 
