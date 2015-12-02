@@ -33,24 +33,41 @@
 
 		<script src="js/Detector.js"></script>
 		<script src="js/libs/stats.min.js"></script>
-                <script src="js/controls/OrbitControls.js"></script>
+        <script src="js/controls/OrbitControls.js"></script>
                 
-                <script src="models/nodes-data.js"></script>    
+        <script src="models/nodes-data.js"></script>    
                 
                 
-                <script type="x-shader/x-vertex" id="vertexshader">
+        <script type="x-shader/x-vertex" id="vertexshader">
+        	#define PI 3.1415926535897932384626433832795
 
 			attribute float size;
 			attribute vec3 customColor;
 
 			varying vec3 vColor;
+			
+
+			float atan2(in float y, in float x)
+			{
+			    return x == 0.0 ? sign(y)*PI/2.0 : atan(y, x);
+			}
 
 			void main() {
 
 				vColor = customColor;
+				float yRot = atan2(position.x, -position.z);
+				float xRot = atan2(position.y, -position.z);
 
-				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+				mat4 translation = mat4(vec4(1,0,0,0), vec4(0,1,0,0), vec4(0,0,1,0), vec4(position.x, position.y, position.z, 1));
 
+				mat4 xRotation = mat4(vec4(1,0,0,0), vec4(0, -sin(xRot), cos(xRot), 0), vec4(0, cos(xRot),sin(xRot), 0), vec4(0,0,0,1));
+				mat4 yRotation = mat4(vec4(cos(yRot), 0 , -sin(yRot), 0), vec4(0,1,0,0), vec4(sin(yRot), 0, cos(yRot), 0), vec4(0,0,0,1));
+				
+				mat4 transform = xRotation*yRotation;
+
+				vec4 newPosition = transform*vec4(position.xyz, 1.0);
+				vec4 mvPosition = modelViewMatrix * newPosition;
+				//vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 				gl_PointSize = size * ( 300.0 / length( mvPosition.xyz ) );
 
 				gl_Position = projectionMatrix * mvPosition;
@@ -455,6 +472,7 @@
 			}
 
 		</script>
+
 
 	</body>
 </html>

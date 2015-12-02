@@ -325,7 +325,8 @@
                 Organization name
                 */
                 //"86.107.110.50:8333": [70002, "/Satoshi:0.11.1/", 1.446.012.293, 1, 381210, "86.107.110.50", null, "RO", 46.0, 25.0, "Europe/Bucharest", "AS8708", "RCS & RDS SA"]
-                var s = "<p><b>IP</b>: " + ip +"</p>";
+                var s = "<div style=''>";
+                s+="<b>IP</b>: " + ip +"</br>";
                 s+= "<b>Version</b>: " + node[0] +"</br>";
                 s+= "<b>User agent</b>: " + node[1] +"</br>";
                 s+= "<b>Connected since</b>: " + new Date(node[2]*1000) +"</br>";
@@ -339,6 +340,7 @@
                 s+= "<b>Timezone</b>: " + node[10] +"</br>";
                 s+= "<b>ASN</b>: " + node[11] +"</br>";
                 s+= "<b>ISP</b>: " + node[12] +"</br>";
+                s+= "</div>";
                 return s;
             }
 
@@ -412,6 +414,9 @@
 			}
 
 		</script>
+
+
+
 
 	</body>
 </html>
