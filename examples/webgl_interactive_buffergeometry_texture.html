@@ -94,10 +94,6 @@
                 
                 //canvas.addEventListenter("mouseup",)
 
-                
-                
-
-
                 earth.onload = function(){
                     
                     canvas.width  = earth.width;
@@ -192,6 +188,39 @@
                 enableRaycaster = true;
             }
     
+
+            var GeoLayer = function(filename, width, height, positions){
+                this.canvas = document.createElement('canvas');
+                
+                this.canvas.id     = filename;
+                this.canvas.width  = width;
+                this.canvas.height = height;
+                this.context = this.canvas.getContext('2d');
+                this.canvas.visibility = "hidden";                
+                this.canvas.style.position = "absolute";
+                
+                var image = new Image();
+                image.src = filename;
+
+                image.onload = function () {
+                    for ( var position in this.positions ){
+                        var lon = position[0];
+                        var lat = position[1];
+                        var x = (lon+180.0)/360.0 * this.canvas.width-image.width/2.0;
+                        var y = (1-(lat+90.0)/180.0) * this.canvas.height-image.height/2.0;
+                
+                        this.context.drawImage(image, x, y, image.width, image.height);
+                    }
+                }
+                
+            }
+
+            GeoLayer.prototype.getImage(){
+                return this.canvas.toDataURL("image/png");
+                //return this.context.getImageData().getData();
+            }
+
+
     
             function getNodeInfo(ip){
                 var nodes = nodesData['nodes'];                            
