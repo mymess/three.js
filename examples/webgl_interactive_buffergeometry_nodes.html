@@ -165,6 +165,8 @@
 				var geometry = new THREE.BufferGeometry();
 				geometry.addAttribute( 'position', new THREE.BufferAttribute(positions, 3 ) );
                                                                 
+                geometry.addAttribute( 'normal', new THREE.BufferAttribute(positions, 3 ) );
+                
 				inactiveMaterial = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 1} );
                               
 

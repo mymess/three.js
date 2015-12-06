@@ -65,7 +65,7 @@
 				//vec4 mvPosition = modelViewMatrix * vec4(newPos, 1.0);
 
 				
-				gl_PointSize = 100.0*size;// * ( 300.0 / length( mvPosition.xyz ) );				
+				//gl_PointSize = 100.0*size;// * ( 300.0 / length( mvPosition.xyz ) );				
 
 				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 			}
@@ -86,14 +86,15 @@
 
 				vec3 color = texture2D( texture, uv ).rgb;
 
-				//if ( vNormal.z < - 0.85 ) color = vec3( 0.777, 0.74, 0.74 ); // back of eye
+				
 	
 				//gl_FragColor = vec4( color, 1.0 );
 
 
 				gl_FragColor = vec4( color , 1.0 );
 
-				//gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
+				//if ( vNormal.z < - 0.85 ) color = vec3( 0.777, 0.74, 0.74 ); // back of eye
+				gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
 
 				//if ( gl_FragColor.a < ALPHATEST ) discard;
 
@@ -186,8 +187,8 @@
 					uniforms: {
 						color:   { type: "c", value: new THREE.Color( 0xffffff ) },
 						texture: { type: "t", value: THREE.ImageUtils.loadTexture( "images/particle.png" ), 
-                                                          blending: THREE.AdditiveBlending, transparent: true, depthWrite: false
-                                                }
+                        blending: THREE.AdditiveBlending, transparent: true, depthWrite: false
+                       }
 					},
 					vertexShader: document.getElementById( 'vertexshader' ).textContent,
 					fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
@@ -243,15 +244,12 @@
                 // add it to the scene
                 scene.add( particleSystem );
                 
-                //SPRITE
-                sprite = makeTextSprite("HOLA MUNDO!! ", undefined);
-
-                sceneOrtho.add( sprite );
-				scene.add(sprite);
+               
+               
 				
 				//raycaster
 				raycaster = new THREE.Raycaster();
-                                raycaster.linePrecision = .1;
+				raycaster.linePrecision = .1;
                                 
 				mouse = new THREE.Vector2();
 
@@ -262,7 +260,7 @@
                               
 
 				lines = new THREE.Line( geometry, inactiveMaterial );
-                                //scene.add( lines );
+                                scene.add( lines );
 
 				//
                 geometry = new THREE.Geometry();
@@ -271,7 +269,7 @@
                 selectedMaterial = new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 3});
                 
                 selectedLine = new THREE.Line(geometry, selectedMaterial);
-                //scene.add(selectedLine);
+                scene.add(selectedLine);
                             
 
 				//Earth
@@ -285,7 +283,7 @@
 
                 var earthMesh = new THREE.Mesh(sphereGeometry, earthMaterial);
                 earthMesh.name = 'earth';
-                //scene.add(earthMesh);
+                scene.add(earthMesh);
 
 				//
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -328,20 +326,20 @@
 
 				event.preventDefault();
                                 
-                sprite.position.set( event.clientX, event.clientY - 20, 0 );
+                
 
 				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
 			}
 
-                        function onDocumentMouseDown(event){
-                            enableRaycaster = false;
-                        }
+            function onDocumentMouseDown(event){
+                enableRaycaster = false;
+            }
 
-                        function onDocumentMouseUp(){
-                            enableRaycaster = true;
-                        }
+            function onDocumentMouseUp(){
+                enableRaycaster = true;
+            }
 
 			//
 
@@ -351,45 +349,6 @@
 				stats.update();
 
 			}
-
-
-            function makeTextSprite( message, parameters )
-            {
-                    if ( parameters === undefined ) parameters = {};
-                    var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Arial";
-                    var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
-                    var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
-                    var borderColor = parameters.hasOwnProperty("borderColor") ?parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
-                    var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
-                    var textColor = parameters.hasOwnProperty("textColor") ?parameters["textColor"] : { r:0, g:0, b:0, a:1.0 };
-
-                    var canvas = document.createElement('canvas');
-                    context = canvas.getContext('2d');
-                    context.font = "Bold " + fontsize + "px " + fontface;
-                    var metrics = context.measureText( message );
-                    var textWidth = metrics.width;
-
-                    context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + "," + backgroundColor.b + "," + backgroundColor.a + ")";
-                    context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + "," + borderColor.b + "," + borderColor.a + ")";
-
-                    context.lineWidth = borderThickness;
-                    //roundRect(context, borderThickness/2, borderThickness/2, (textWidth + borderThickness) * 1.1, fontsize * 1.4 + borderThickness, 8);
-                    roundRect(context, borderThickness/2, borderThickness/2, 512, 256, 8);
-                    
-                    context.fillStyle = "rgba("+textColor.r+", "+textColor.g+", "+textColor.b+", 1.0)";
-                    context.fillText( message, borderThickness, fontsize + borderThickness);
-
-                    texture = new THREE.Texture(canvas) 
-                    texture.needsUpdate = true;
-
-                    var spriteMaterial = new THREE.SpriteMaterial( { map: texture, fog: true } );
-                    spriteMaterial.map.offset.set( -0.5, -0.5 );
-                    spriteMaterial.needsUpdate = true;
-                    sprite = new THREE.Sprite( spriteMaterial );
-                    
-                    sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
-                    return sprite;  
-            }
 
 	
             function roundRect(ctx, x, y, w, h, r) { 
@@ -449,19 +408,19 @@
                                         //selectedLine.geometry.vertices[1] = v;
                                         
                                         
-                                        context.clearRect(0, 0, 640, 480);
+                                        
                                         var message = getNodeInfo( IPs[INTERSECT] );
-                                        console.log(message);
-																				
+                                        console.log(message);																				
 										
-										var metrics = context.measureText(message);
-										var width = metrics.width;
+										
+										/*
 										context.fillStyle = "rgba(0,0,0,0.95)"; // black border
 										context.fillRect( 0,0, width+8,20+8);
 										context.fillStyle = "rgba(255,255,255,0.95)"; // white filler
 										context.fillRect( 2,2, width+4,20+4 );
 										context.fillStyle = "rgba(0,0,0,1)"; // text color
 										context.fillText( message, 0,0 );
+										*/
 										//sprite.material.needsUpdate = true;
 										//texture.needsUpdate = true;
                                          
@@ -477,10 +436,7 @@
                                         //selectedLine.visible = true;
                                         
                                                                                                                                                                
-                                    } else {
-										context.clearRect(0,0,300,300);
-										texture.needsUpdate = true;
-                                    }
+                                    } 
                                 }
 								
 
@@ -489,7 +445,7 @@
 				renderer.clear();
 				renderer.render( scene, camera );
 				renderer.clearDepth();
-				renderer.render( sceneOrtho, cameraOrtho );				
+						
     
 			}
 
