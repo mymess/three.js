@@ -211,12 +211,7 @@
 					positions[ i ]     = x;
 					positions[ i + 1 ] = y;
 					positions[ i + 2 ] = z;
-
-					positions[ i + 3 ] = 0;
-					positions[ i + 4 ] = 0;
-					positions[ i + 5 ] = 0;
-                                        
-                                       
+                   
 					
 					//particles
                      particle = new THREE.Vector3(x, y, z);
@@ -238,6 +233,9 @@
                 particleSystem = new THREE.Points(
                     particles,
                     shaderMaterial);
+
+                particles.addAttribute( 'size', new THREE.BufferAttribute( sizes, 1 ) );
+                particles.addAttribute('ip', new THREE.BufferAttribute(IPs, 1));
 
                 particleSystem.sortParticles = true;
                 
@@ -283,7 +281,7 @@
 
                 var earthMesh = new THREE.Mesh(sphereGeometry, earthMaterial);
                 earthMesh.name = 'earth';
-                scene.add(earthMesh);
+                //scene.add(earthMesh);
 
 				//
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
