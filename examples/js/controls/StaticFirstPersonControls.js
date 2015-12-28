@@ -30,6 +30,8 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 	this.verticalMin = 0;
 	this.verticalMax = Math.PI;
 
+	this.zoom = .02;
+
 	this.autoSpeedFactor = 0.0;
 
 	this.mouseX = 0;
@@ -144,7 +146,7 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 			document.body.style.cursor = "all-scroll";
 			//start slow after mouse up
 			if(this.lastMouseX ==0 && this.lastMouseY == 0){
-				p =.1;
+				p = 0;
 			}
 
 			this.mouseX = -p*(event.pageX - this.lastMouseX);
@@ -162,6 +164,26 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 		}
 		*/
 		
+	};
+
+	this.onMouseWheel = function ( event ) {
+	    event.preventDefault();
+	    event.stopPropagation();
+
+	    var delta = 0;
+
+	    if ( event.wheelDelta ) { // WebKit / Opera / Explorer 9
+	        delta = event.wheelDelta / 40;
+	    } else if ( event.detail ) { // Firefox
+	        delta = - event.detail / 3;
+	    }
+
+	    var width = camera.right / zoom;
+	    var height = camera.top / zoom;
+
+	    this.zoom -= delta * 0.001;
+
+	    //renderer.render( scene, camera );
 	};
 
 	this.onKeyDown = function ( event ) {
@@ -291,13 +313,17 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 	var _onMouseMove = bind( this, this.onMouseMove );
 	var _onMouseDown = bind( this, this.onMouseDown );
 	var _onMouseUp = bind( this, this.onMouseUp );
+	var _onMouseWheel = bind( this, this.onMouseWheel );
+
 	var _onKeyDown = bind( this, this.onKeyDown );
 	var _onKeyUp = bind( this, this.onKeyUp );
+
 
 	this.domElement.addEventListener( 'contextmenu', contextmenu, false );
 	this.domElement.addEventListener( 'mousemove', _onMouseMove, false );
 	this.domElement.addEventListener( 'mousedown', _onMouseDown, false );
 	this.domElement.addEventListener( 'mouseup', _onMouseUp, false );
+	this.domElement.addEventListener( 'mousewheel', _onMouseWheel, false );
 
 	window.addEventListener( 'keydown', _onKeyDown, false );
 	window.addEventListener( 'keyup', _onKeyUp, false );

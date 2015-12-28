@@ -44,6 +44,7 @@
 
 		<script src="../build/three.min.js"></script>
 
+
 		<!-- <script src="js/controls/OrbitControls.js"></script> -->
 		<script src="js/controls/StaticFirstPersonControls.js"></script>
 		<script src="js/astronomy/stars.js"></script>
@@ -54,7 +55,7 @@
 
 		<script src="js/Detector.js"></script>
 		<script src="js/libs/dat.gui.min.js"></script>
-
+		<script src="js/libs/stats.min.js"></script>
 
 		<script type="x-shader/x-vertex" id="vertexshader">
 
@@ -75,10 +76,10 @@
 
 			}
 
+
 		</script>
 
 		<script type="x-shader/x-fragment" id="fragmentshader">
-
 			uniform vec3 color;
 			uniform sampler2D texture;
 
@@ -90,9 +91,8 @@
 
 				gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
 
-				if ( gl_FragColor.a < ALPHATEST ) discard;
-
 			}
+
 
 		</script>
 
@@ -103,7 +103,7 @@
 
 			var container;
 
-			var camera, controls, scene, renderer;
+			var camera, controls, scene, renderer, stats;
 
 			var sky, sunSphere;
 
@@ -138,7 +138,7 @@
 					mieCoefficient: 0.005,
 					mieDirectionalG: 0.8,
 					luminance: 1,
-					inclination: 0.49, // elevation / inclination
+					inclination: 0.79, // elevation / inclination
 					azimuth: 0.25, // Facing front,
 					sun: ! true
 				};
@@ -177,12 +177,19 @@
 				gui.add( effectController, "mieCoefficient", 0.0, 0.1, 0.001 ).onChange( guiChanged );
 				gui.add( effectController, "mieDirectionalG", 0.0, 1, 0.001 ).onChange( guiChanged );
 				gui.add( effectController, "luminance", 0.0, 2 ).onChange( guiChanged );
-				gui.add( effectController, "inclination", 0, 1, 0.0001 ).onChange( guiChanged );
+				gui.add( effectController, "inclination", 0, 1, 0.7001 ).onChange( guiChanged );
 				gui.add( effectController, "azimuth", 0, 1, 0.0001 ).onChange( guiChanged );
 				gui.add( effectController, "sun" ).onChange( guiChanged );
 
 				guiChanged();
-				
+						
+
+				//stats
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				document.body.appendChild( stats.domElement );
+
 			}
 
 
@@ -211,14 +218,14 @@
 
 				//create particle system
 
-				var starsGeom = new THREE.Geometry();// create the particle variables
+				var starsGeom = new THREE.BufferGeometry();// create the particle variables
 
                 
                 var shaderMaterial = new THREE.ShaderMaterial( {
 
 					uniforms: {
 						color:   { type: "c", value: new THREE.Color( 0xffffff ) },
-						texture: { type: "t", value: THREE.ImageUtils.loadTexture( "images/particle.png" ), 
+						texture: { type: "t", value: THREE.ImageUtils.loadTexture( "textures/sprites/spark1.png" ), 
                         blending: THREE.AdditiveBlending, transparent: true, depthWrite: false
                        }
 					},
@@ -230,31 +237,63 @@
 				} );    
 
 
-                var r = celestialRadius/2;
+                var r = celestialRadius * 0.9;
 
-                console.log( SKY.stars.length );
-                console.log( SKY.getStarData(SKY.stars[0]) );
+                var particles = parseInt(SKY.stars.length) ;
+				
+				console.log( "particles-> %d ",particles );
+
+                var positions = new Float32Array( particles * 3 );
+				var colors = new Float32Array( particles * 3 );
+				var sizes = new Float32Array( particles );
+
+				var color = new THREE.Color();
 
 
-                for (var i =0 ; i<10; ++i){
+				//DEBUG
+				var star = SKY.getStarData( SKY.stars[0] );
+				x = r * Math.sin(star.azimuth*SKY.DEG2RAD) * Math.cos(star.altitude*SKY.DEG2RAD);
+                y = r * Math.sin(star.altitude*SKY.DEG2RAD);
+                z = r * Math.cos(star.azimuth*SKY.DEG2RAD) * Math.cos(star.altitude*SKY.DEG2RAD);
+
+
+                var rgb = SKY.getStarRGB( 0 );
+                console.log("x %f  y %f  z %f", x,y,z);
+				console.log("size %f", SKY.getStarSize( 0 ) );
+				console.log("color %f %f %f", rgb.r, rgb.g, rgb.b );
+
+
+                for (var i =0, i3 = 0 ; i<particles; i++, i3+=3){
 
                 	var star = SKY.getStarData( SKY.stars[i] );
 
-                	var x = r * Math.sin(star.azimuth*SKY.DEG2RAD) * Math.cos(star.altitude*SKY.DEG2RAD) ;
-                	var y = r * Math.sin(star.altitude*SKY.DEG2RAD);
-                	var z = r * Math.cos(star.azimuth*SKY.DEG2RAD) * Math.cos(star.altitude*SKY.DEG2RAD);
+                	positions[ i3 ] = r * Math.sin(star.azimuth*SKY.DEG2RAD) * Math.cos(star.altitude*SKY.DEG2RAD);
+                	positions[ i3+1 ] = r * Math.sin(star.altitude*SKY.DEG2RAD);
+                	positions[ i3+2 ] = r * Math.cos(star.azimuth*SKY.DEG2RAD) * Math.cos(star.altitude*SKY.DEG2RAD);
 
-                	var pos = new THREE.Vector3(x, y, z);
+                	var rgb = SKY.getStarRGB( i );
+                	
+
+                	colors[ i3 ] = rgb.r;
+                	colors[ i3+1 ] = rgb.g;
+					colors[ i3+2 ] = rgb.b;
 
 
-                	starsGeom.vertices.push( pos );
+					sizes[ i ] = 20000 * SKY.getStarSize( i );
+                	
                 }
 
-                var points = new THREE.Points( starsGeom, shaderMaterial);
+                starsGeom.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+				starsGeom.addAttribute( 'customColor', new THREE.BufferAttribute( colors, 3 ) );
+				starsGeom.addAttribute( 'size', new THREE.BufferAttribute( sizes, 1 ) );
 
+                var points = new THREE.Points( starsGeom, shaderMaterial);
                 scene.add( points );
 
 			}
+
+
+
 
 			function init() {
 
@@ -322,7 +361,7 @@
 				requestAnimationFrame( animate );
 				render();
 				controls.update( clock.getDelta() );
-
+				stats.update();
 			}
 
 		</script>
