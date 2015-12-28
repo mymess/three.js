@@ -225,19 +225,23 @@
 
 					uniforms: {
 						color:   { type: "c", value: new THREE.Color( 0xffffff ) },
-						texture: { type: "t", value: THREE.ImageUtils.loadTexture( "textures/sprites/spark1.png" ), 
-                        blending: THREE.AdditiveBlending, transparent: true, depthWrite: false
+						texture: { type: "t", value: THREE.ImageUtils.loadTexture( "textures/sprites/spark1.png" )
+                        
                        }
 					},
 					vertexShader: document.getElementById( 'vertexshader' ).textContent,
 					fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
+					blending: THREE.AdditiveBlending,
+                    transparent: true, 
+                    depthWrite: false,
+					depthTest:      false,
 
 					alphaTest: 0.9,
 
 				} );    
 
 
-                var r = celestialRadius * 0.9;
+                var r = celestialRadius * 1.1;
 
                 var particles = parseInt(SKY.stars.length) ;
 				

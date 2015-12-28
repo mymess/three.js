@@ -288,41 +288,22 @@ SKY = {
 	},
 
 	getStarRGB: function(starIdx){
-		var colorIndex = parseFloat(this.stars[ starIdx ][ 16 ]);
+		var bv = parseFloat(this.stars[ starIdx ][ 16 ]);
+    	var t,  r=0.0, g=0.0, b=0.0; 
 
-        //RED
-        // y = -0,0921x5 + 0,3731x4 - 0,3497x3 - 0,285x2 + 0,5327x + 0,8217            
-        var red = -.0921*Math.pow(colorIndex, 5 ) + .3731*Math.pow(colorIndex,4) - .3497*Math.pow(colorIndex,3) 
-        	      - .285*Math.pow(colorIndex,2) + .5327*colorIndex + .8217;            
-        if (red>1.0) {
-        	red = 1.0;
-        }
-        
-        //GREEN
-		//y = -0,1054x6 + 0,229x5 + 0,1235x4 - 0,3529x3 - 0,2605x2 + 0,398x + 0,8626
-		var green = -.1054*Math.pow(colorIndex, 6) + .229*Math.pow(colorIndex, 5 ) + .1235*Math.pow(colorIndex, 4) 
-					- .3529*Math.pow(colorIndex, 3) - .2605 * Math.pow(colorIndex, 2 ) + .398*colorIndex + .8626;           
-
-		//BLUE
-		var blue = 0.0;
-        //for the interval [-0.40, 0.40]
-        //y = 1.0f
-        //for the interval (0.40,  1.85]
-        //y = -1,9366x6 + 12,037x5 - 30,267x4 + 39,134x3 - 27,148x2 + 9,0945x - 0,1475
-        //for the interval (1,85-2.0]
-        //y = 0.0f
-        if( colorIndex <= .40){
-            blue = 1.0;
-        }
-        if( colorIndex>.40 && colorIndex<=1.85){
-            blue = -1.9366*Math.pow(colorIndex, 6) + 12.037*Math.pow(colorIndex, 5) - 30.267*Math.pow(colorIndex, 4)
-            	   + 39.134 * Math.pow(colorIndex, 3) -27.148*Math.pow(colorIndex, 2) + 9.0945*colorIndex - .1475;
-        }
-        if( colorIndex>1.85 ){
-            blue = 0.0;                
-        }
-
-        return {r:parseInt(red*255), g: parseInt(green*255), b: parseInt(blue*255) };
+    	if (bv<-0.4) bv=-0.4; if (bv> 2.0) bv= 2.0;
+        if ((bv>=-0.40)&&(bv<0.00)) { t=(bv+0.40)/(0.00+0.40); r=0.61+(0.11*t)+(0.1*t*t); }
+    	else if ((bv>= 0.00)&&(bv<0.40)) { t=(bv-0.00)/(0.40-0.00); r=0.83+(0.17*t)          ; }
+    	else if ((bv>= 0.40)&&(bv<2.10)) { t=(bv-0.40)/(2.10-0.40); r=1.00                   ; }
+        if ((bv>=-0.40)&&(bv<0.00)) { t=(bv+0.40)/(0.00+0.40); g=0.70+(0.07*t)+(0.1*t*t); }
+    	else if ((bv>= 0.00)&&(bv<0.40)) { t=(bv-0.00)/(0.40-0.00); g=0.87+(0.11*t)          ; }
+    	else if ((bv>= 0.40)&&(bv<1.60)) { t=(bv-0.40)/(1.60-0.40); g=0.98-(0.16*t)          ; }
+    	else if ((bv>= 1.60)&&(bv<2.00)) { t=(bv-1.60)/(2.00-1.60); g=0.82         -(0.5*t*t); }
+        if ((bv>=-0.40)&&(bv<0.40)) { t=(bv+0.40)/(0.40+0.40); b=1.00                   ; }
+    	else if ((bv>= 0.40)&&(bv<1.50)) { t=(bv-0.40)/(1.50-0.40); b=1.00-(0.47*t)+(0.1*t*t); }
+    	else if ((bv>= 1.50)&&(bv<1.94)) { t=(bv-1.50)/(1.94-1.50); b=0.63         -(0.6*t*t); }
+    
+        return {'r':Math.round(r*255), 'g': Math.round(g*255), 'b': Math.round(b*255) };
 
 	},
 	
