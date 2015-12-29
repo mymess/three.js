@@ -45,9 +45,10 @@
 		<script src="../build/three.min.js"></script>
 
 
-		<!-- <script src="js/controls/OrbitControls.js"></script> -->
+		<script src="js/controls/OrbitControls.js"></script> 
 		<script src="js/controls/StaticFirstPersonControls.js"></script>
 		<script src="js/astronomy/stars.js"></script>
+		<script src="js/astronomy/constellations.js"></script>
 		<script src="js/astronomy/jSky.js"></script>
 		
 
@@ -106,8 +107,11 @@
 			var camera, controls, scene, renderer, stats;
 
 			var sky, sunSphere;
+			var group = new THREE.Object3D();;
 
 			var celestialRadius = 400000;
+
+			var effectController;
 
 			var clock = new THREE.Clock();
 
@@ -131,8 +135,7 @@
 				scene.add( sunSphere );
 
 				/// GUI
-
-				var effectController  = {
+				effectController  = {
 					turbidity: 10,
 					reileigh: 2,
 					mieCoefficient: 0.005,
@@ -140,7 +143,8 @@
 					luminance: 1,
 					inclination: 0.79, // elevation / inclination
 					azimuth: 0.25, // Facing front,
-					sun: ! true
+					sun: ! true,
+					constellations: ! true
 				};
 
 				
@@ -162,6 +166,7 @@
 					sunSphere.position.z = celestialRadius * Math.sin( phi ) * Math.cos( theta );
 
 					sunSphere.visible = effectController.sun;
+					group.visible = effectController.constellations;
 
 					sky.uniforms.sunPosition.value.copy( sunSphere.position );
 
@@ -180,6 +185,7 @@
 				gui.add( effectController, "inclination", 0, 1, 0.7001 ).onChange( guiChanged );
 				gui.add( effectController, "azimuth", 0, 1, 0.0001 ).onChange( guiChanged );
 				gui.add( effectController, "sun" ).onChange( guiChanged );
+				gui.add( effectController, "constellations" ).onChange( guiChanged );
 
 				guiChanged();
 						
@@ -241,7 +247,7 @@
 				} );    
 
 
-                var r = celestialRadius * 1.1;
+                var r = celestialRadius;
 
                 var particles = parseInt(SKY.stars.length) ;
 				
@@ -254,26 +260,14 @@
 				var color = new THREE.Color();
 
 
-				//DEBUG
-				var star = SKY.getStarData( SKY.stars[0] );
-				x = r * Math.sin(star.azimuth*SKY.DEG2RAD) * Math.cos(star.altitude*SKY.DEG2RAD);
-                y = r * Math.sin(star.altitude*SKY.DEG2RAD);
-                z = r * Math.cos(star.azimuth*SKY.DEG2RAD) * Math.cos(star.altitude*SKY.DEG2RAD);
-
-
-                var rgb = SKY.getStarRGB( 0 );
-                console.log("x %f  y %f  z %f", x,y,z);
-				console.log("size %f", SKY.getStarSize( 0 ) );
-				console.log("color %f %f %f", rgb.r, rgb.g, rgb.b );
-
-
                 for (var i =0, i3 = 0 ; i<particles; i++, i3+=3){
 
                 	var star = SKY.getStarData( SKY.stars[i] );
+					var position = SKY.getRectangularCoords( star.azimuth, star.altitude );
 
-                	positions[ i3 ] = r * Math.sin(star.azimuth*SKY.DEG2RAD) * Math.cos(star.altitude*SKY.DEG2RAD);
-                	positions[ i3+1 ] = r * Math.sin(star.altitude*SKY.DEG2RAD);
-                	positions[ i3+2 ] = r * Math.cos(star.azimuth*SKY.DEG2RAD) * Math.cos(star.altitude*SKY.DEG2RAD);
+                	positions[ i3 ] = r * position.x;
+                	positions[ i3+1 ] = r * position.y;
+                	positions[ i3+2 ] = r * position.z;
 
                 	var rgb = SKY.getStarRGB( i );
                 	
@@ -283,7 +277,7 @@
 					colors[ i3+2 ] = rgb.b;
 
 
-					sizes[ i ] = 20000 * SKY.getStarSize( i );
+					sizes[ i ] = 30000 * SKY.getStarSize( i );
                 	
                 }
 
@@ -294,10 +288,52 @@
                 var points = new THREE.Points( starsGeom, shaderMaterial);
                 scene.add( points );
 
+                drawConstellations();
+                
 			}
 
 
+			function drawConstellations(){
+				var material = new THREE.LineBasicMaterial({color: 0xffffff});
+				
+				group.name = 'constellations';
 
+				for (var name in constellations){
+					
+					var lines = constellations[name];
+
+					for( var i=0; i<lines.length; i++ ){
+
+						var line = lines[i];
+
+						var star1 = SKY.getStarDataByHipId( line[0] );
+						var star2 = SKY.getStarDataByHipId( line[1] );
+						
+						if( star1 === undefined || star2 === undefined){
+							continue;
+						}
+
+
+						var a = SKY.getRectangularCoords( star1.azimuth, star1.altitude );
+						var b = SKY.getRectangularCoords( star2.azimuth, star2.altitude );
+
+						var v1 = new THREE.Vector3(a.x, a.y, a.z);
+						var v2 = new THREE.Vector3(b.x, b.y, b.z);
+
+						var geometry = new THREE.Geometry();
+						geometry.vertices.push(
+							v1.multiplyScalar(celestialRadius),
+							v2.multiplyScalar(celestialRadius)							
+						);
+
+
+						group.add( new THREE.Line( geometry, material) );
+
+					}
+				}
+				group.visible =  effectController.constellations;
+				scene.add( group );
+			}
 
 			function init() {
 
@@ -318,16 +354,17 @@
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
 
-				controls = new THREE.StaticFirstPersonControls( camera );
-
+				//controls = new THREE.StaticFirstPersonControls( camera );
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
 				
 				controls.lookSpeed = 0.4;
         		controls.movementSpeed = 0;
-        		controls.noFly = false;
+        		controls.noFly = true;
         		controls.lookVertical = true;
         		controls.constrainVertical = true;
-        		
-
+        		controls.enableZoom = true;
+        		controls.zoomSpeed = 10;
+        		controls.minZoom = 100;
 				//controls.addEventListener( 'change', render );
 				
 				//controls.maxPolarAngle = Math.PI / 2;

@@ -304,7 +304,8 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 		this.domElement.removeEventListener( 'mousedown', _onMouseDown, false );
 		this.domElement.removeEventListener( 'mousemove', _onMouseMove, false );
 		this.domElement.removeEventListener( 'mouseup', _onMouseUp, false );
-
+		this.domElement.removeEventListener( 'mousewheel', _onMouseWheel, false );
+		
 		window.removeEventListener( 'keydown', _onKeyDown, false );
 		window.removeEventListener( 'keyup', _onKeyUp, false );
 

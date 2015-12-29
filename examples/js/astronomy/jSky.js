@@ -65,6 +65,8 @@ SKY = {
 		this.bodies = [];
 		this.stars = starData;
 		this.maxMag = 7;
+
+		this.reverseMap = this.getReverseMap();
 	},
 
 	update: function(){		
@@ -326,6 +328,34 @@ SKY = {
 
 	},
 
+	//Calculates the reversed array map: Map[ hip ] = starIdx
+	getReverseMap: function(){
+		var map = [];
+		for( var i=0; i< this.stars.length; ++i ){
+			var star = this.stars[i];
+			map[ star[ 1 ] ] = i;
+		}
+
+		return map;
+	},
+	getStarDataByHipId: function( hip ){
+		var i = 0;
+		var ret = undefined;
+		var starId = this.reverseMap[hip];
+		if( this.stars[ starId ] != undefined ){
+			ret = this.getStarData( this.stars[ starId ] );				
+		}
+
+		return ret;
+	},
+
+	getRectangularCoords: function( azimuth, height ){
+		var X = Math.sin(azimuth*SKY.DEG2RAD) * Math.cos(height*SKY.DEG2RAD);
+        var Y = Math.sin(height*SKY.DEG2RAD);
+        var Z = Math.cos(azimuth*SKY.DEG2RAD) * Math.cos(height*SKY.DEG2RAD);
+
+        return {x: X, y: Y, z: Z};
+	},
 
 	log: function(){
 		for( var body in this.bodies){
