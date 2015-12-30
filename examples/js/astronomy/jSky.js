@@ -64,7 +64,7 @@ SKY = {
 		//this.loadBodiesData();
 		this.bodies = [];
 		this.stars = starData;
-		this.maxMag = 7;
+		this.maxMag = 17;
 
 		this.reverseMap = this.getReverseMap();
 	},

@@ -10,6 +10,8 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 	this.target = new THREE.Vector3( 0, 0, 0 );
 
 	this.domElement = ( domElement !== undefined ) ? domElement : document;
+	
+	console.log( this.domElement );
 
 	this.enabled = true;
 
@@ -30,7 +32,7 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 	this.verticalMin = 0;
 	this.verticalMax = Math.PI;
 
-	this.zoom = .02;
+	this.zoom = 1.2;
 
 	this.autoSpeedFactor = 0.0;
 
@@ -134,7 +136,7 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 
 	this.onMouseMove = function ( event ) {
 
-		if ( this.domElement === document && event.buttons>0) {
+		if ( event.buttons>0) {
 
 			//this.mouseX = event.pageX - this.viewHalfX;
 			//this.mouseY = event.pageY - this.viewHalfY;
@@ -178,12 +180,8 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 	        delta = - event.detail / 3;
 	    }
 
-	    var width = camera.right / zoom;
-	    var height = camera.top / zoom;
-
-	    this.zoom -= delta * 0.001;
-
-	    //renderer.render( scene, camera );
+	    this.zoom -= delta * .01;
+	    
 	};
 
 	this.onKeyDown = function ( event ) {
@@ -290,6 +288,9 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 
 		this.object.lookAt( targetPosition );
 
+		this.object.zoom = this.zoom ;
+		
+		this.object.updateProjectionMatrix();
 	};
 
 	function contextmenu( event ) {
@@ -325,6 +326,7 @@ THREE.StaticFirstPersonControls = function ( object, domElement ) {
 	this.domElement.addEventListener( 'mousedown', _onMouseDown, false );
 	this.domElement.addEventListener( 'mouseup', _onMouseUp, false );
 	this.domElement.addEventListener( 'mousewheel', _onMouseWheel, false );
+	this.domElement.addEventListener( 'DOMMouseScroll', _onMouseWheel, false );
 
 	window.addEventListener( 'keydown', _onKeyDown, false );
 	window.addEventListener( 'keyup', _onKeyUp, false );

@@ -277,7 +277,7 @@
 					colors[ i3+2 ] = rgb.b;
 
 
-					sizes[ i ] = 30000 * SKY.getStarSize( i );
+					sizes[ i ] = 40000 * SKY.getStarSize( i );
                 	
                 }
 
@@ -338,9 +338,7 @@
 			function init() {
 
 				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 100, 2000000 );
-				camera.position.set( 0, 100, 0 );
-
-				//camera.setLens(20);
+				camera.position.set( 0, 10, 0 );				
 
 				scene = new THREE.Scene();
 
@@ -354,17 +352,20 @@
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
 
-				//controls = new THREE.StaticFirstPersonControls( camera );
-				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls = new THREE.StaticFirstPersonControls( camera, renderer.domElement );
+				
+
+				//controls = new THREE.OrbitControls( camera, renderer.domElement );
 				
 				controls.lookSpeed = 0.4;
-        		controls.movementSpeed = 0;
-        		controls.noFly = true;
+        		controls.movementSpeed = 10;
+        		controls.noFly = false;
         		controls.lookVertical = true;
         		controls.constrainVertical = true;
         		controls.enableZoom = true;
-        		controls.zoomSpeed = 10;
         		controls.minZoom = 100;
+        		//controls.zoomSpeed = 10;
+        		
 				//controls.addEventListener( 'change', render );
 				
 				//controls.maxPolarAngle = Math.PI / 2;
