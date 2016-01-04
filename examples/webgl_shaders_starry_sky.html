@@ -1,0 +1,413 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - shaders - sky sun shader</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+
+			body {
+				color: #000;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				font-weight: bold;
+
+				background-color: #fff;
+				margin: 0px;
+				overflow: hidden;
+				text
+			}
+
+			#info {
+				color:#ccc;
+				text-shadow: 1px 1px rgba(0,0,0,0.25);
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+
+			}
+
+			a {
+				color: #fff;
+			}
+
+		</style>
+	</head>
+	<body>
+
+		<div id="info"><a href="http://threejs.org" target="_blank">three.js</a> webgl - planetarium
+
+			<br/><a href="https://plus.google.com/">More info</a> by <a href="http://twitter.com/joandelason">joandelason</a>
+
+		</div>
+
+		<script src="../build/three.min.js"></script>
+
+
+		<script src="js/controls/OrbitControls.js"></script> 
+		<script src="js/controls/StaticFirstPersonControls.js"></script>
+		<script src="js/astronomy/stars.js"></script>
+		<script src="js/astronomy/constellations.js"></script>
+		<script src="js/astronomy/jSky.js"></script>
+		
+
+		<script src="js/SkyShader.js"></script>
+
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/dat.gui.min.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+
+		<script type="x-shader/x-vertex" id="vertexshader">
+
+			attribute float size;
+			attribute vec3 customColor;
+
+			varying vec3 vColor;
+
+			void main() {
+
+				vColor = customColor;
+
+				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+				gl_PointSize = size * ( 300.0 / length( mvPosition.xyz ) );
+
+				gl_Position = projectionMatrix * mvPosition;
+
+			}
+
+
+		</script>
+
+		<script type="x-shader/x-fragment" id="fragmentshader">
+			uniform vec3 color;
+			uniform sampler2D texture;
+
+			varying vec3 vColor;
+
+			void main() {
+
+				gl_FragColor = vec4( color * vColor, 1.0 );
+
+				gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
+
+			}
+
+
+		</script>
+
+		<script>
+
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container;
+
+			var camera, controls, scene, renderer, stats;
+
+			var sky, sunSphere;
+			var group = new THREE.Object3D();;
+
+			var celestialRadius = 400000;
+
+			var effectController;
+
+			var clock = new THREE.Clock();
+
+			init();
+			animate();
+			
+
+			function initSky() {
+
+				// Add Sky Mesh
+				sky = new THREE.Sky();
+				scene.add( sky.mesh );
+
+				// Add Sun Helper
+				sunSphere = new THREE.Mesh(
+					new THREE.SphereBufferGeometry( 20000, 16, 8 ),
+					new THREE.MeshBasicMaterial( { color: 0xffffff } )
+				);
+				sunSphere.position.y = - 700000;
+				sunSphere.visible = false;
+				scene.add( sunSphere );
+
+				/// GUI
+				effectController  = {
+					turbidity: 10,
+					reileigh: 2,
+					mieCoefficient: 0.005,
+					mieDirectionalG: 0.8,
+					luminance: 1,
+					inclination: 0.79, // elevation / inclination
+					azimuth: 0.25, // Facing front,
+					sun: ! true,
+					constellations: ! true
+				};
+
+				
+
+				function guiChanged() {
+
+					var uniforms = sky.uniforms;
+					uniforms.turbidity.value = effectController.turbidity;
+					uniforms.reileigh.value = effectController.reileigh;
+					uniforms.luminance.value = effectController.luminance;
+					uniforms.mieCoefficient.value = effectController.mieCoefficient;
+					uniforms.mieDirectionalG.value = effectController.mieDirectionalG;
+
+					var theta = Math.PI * ( effectController.inclination - 0.5 );
+					var phi = 2 * Math.PI * ( effectController.azimuth - 0.5 );
+
+					sunSphere.position.x = celestialRadius * Math.cos( phi );
+					sunSphere.position.y = celestialRadius * Math.sin( phi ) * Math.sin( theta );
+					sunSphere.position.z = celestialRadius * Math.sin( phi ) * Math.cos( theta );
+
+					sunSphere.visible = effectController.sun;
+					group.visible = effectController.constellations;
+
+					sky.uniforms.sunPosition.value.copy( sunSphere.position );
+
+					renderer.render( scene, camera );
+
+				}
+
+				
+				var gui = new dat.GUI();
+
+				gui.add( effectController, "turbidity", 1.0, 20.0, 0.1 ).onChange( guiChanged );
+				gui.add( effectController, "reileigh", 0.0, 4, 0.001 ).onChange( guiChanged );
+				gui.add( effectController, "mieCoefficient", 0.0, 0.1, 0.001 ).onChange( guiChanged );
+				gui.add( effectController, "mieDirectionalG", 0.0, 1, 0.001 ).onChange( guiChanged );
+				gui.add( effectController, "luminance", 0.0, 2 ).onChange( guiChanged );
+				gui.add( effectController, "inclination", 0, 1, 0.7001 ).onChange( guiChanged );
+				gui.add( effectController, "azimuth", 0, 1, 0.0001 ).onChange( guiChanged );
+				gui.add( effectController, "sun" ).onChange( guiChanged );
+				gui.add( effectController, "constellations" ).onChange( guiChanged );
+
+				guiChanged();
+						
+
+				//stats
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				document.body.appendChild( stats.domElement );
+
+			}
+
+
+			function initSkyModel(){
+
+				
+
+				var day = 25;
+				var hours = 22;
+				var minutes = 51;
+				var seconds = 24;
+				var milliseconds = 0;
+
+				var utc = new Date(year, month, 
+									Math.floor(day), Math.floor(hours), 
+									Math.floor(minutes), Math.floor(seconds), 
+									milliseconds );
+
+
+				var lon = 23/60 + 24/3600;
+				var lat = 39+28/60 + 48/3600; 
+
+				SKY.init(utc, lon, lat);
+
+				SKY.update();
+
+				//create particle system
+
+				var starsGeom = new THREE.BufferGeometry();// create the particle variables
+
+                
+                var shaderMaterial = new THREE.ShaderMaterial( {
+
+					uniforms: {
+						color:   { type: "c", value: new THREE.Color( 0xffffff ) },
+						texture: { type: "t", value: THREE.ImageUtils.loadTexture( "textures/sprites/spark1.png" )
+                        
+                       }
+					},
+					vertexShader: document.getElementById( 'vertexshader' ).textContent,
+					fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
+					blending: THREE.AdditiveBlending,
+                    transparent: true, 
+                    depthWrite: false,
+					depthTest:      false,
+
+					alphaTest: 0.9,
+
+				} );    
+
+
+                var r = celestialRadius;
+
+                var particles = parseInt(SKY.stars.length) ;
+				
+				console.log( "particles-> %d ",particles );
+
+                var positions = new Float32Array( particles * 3 );
+				var colors = new Float32Array( particles * 3 );
+				var sizes = new Float32Array( particles );
+
+				var color = new THREE.Color();
+
+
+                for (var i =0, i3 = 0 ; i<particles; i++, i3+=3){
+
+                	var star = SKY.getStarData( SKY.stars[i] );
+					var position = SKY.getRectangularCoords( star.azimuth, star.altitude );
+
+                	positions[ i3 ] = r * position.x;
+                	positions[ i3+1 ] = r * position.y;
+                	positions[ i3+2 ] = r * position.z;
+
+                	var rgb = SKY.getStarRGB( i );
+                	
+
+                	colors[ i3 ] = rgb.r;
+                	colors[ i3+1 ] = rgb.g;
+					colors[ i3+2 ] = rgb.b;
+
+
+					sizes[ i ] = 40000 * SKY.getStarSize( i );
+                	
+                }
+
+                starsGeom.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+				starsGeom.addAttribute( 'customColor', new THREE.BufferAttribute( colors, 3 ) );
+				starsGeom.addAttribute( 'size', new THREE.BufferAttribute( sizes, 1 ) );
+
+                var points = new THREE.Points( starsGeom, shaderMaterial);
+                scene.add( points );
+
+                drawConstellations();
+                
+			}
+
+
+			function drawConstellations(){
+				var material = new THREE.LineBasicMaterial({color: 0xffffff});
+				
+				group.name = 'constellations';
+
+				for (var name in constellations){
+					
+					var lines = constellations[name];
+
+					for( var i=0; i<lines.length; i++ ){
+
+						var line = lines[i];
+
+						var star1 = SKY.getStarDataByHipId( line[0] );
+						var star2 = SKY.getStarDataByHipId( line[1] );
+						
+						if( star1 === undefined || star2 === undefined){
+							continue;
+						}
+
+
+						var a = SKY.getRectangularCoords( star1.azimuth, star1.altitude );
+						var b = SKY.getRectangularCoords( star2.azimuth, star2.altitude );
+
+						var v1 = new THREE.Vector3(a.x, a.y, a.z);
+						var v2 = new THREE.Vector3(b.x, b.y, b.z);
+
+						var geometry = new THREE.Geometry();
+						geometry.vertices.push(
+							v1.multiplyScalar(celestialRadius),
+							v2.multiplyScalar(celestialRadius)							
+						);
+
+
+						group.add( new THREE.Line( geometry, material) );
+
+					}
+				}
+				group.visible =  effectController.constellations;
+				scene.add( group );
+			}
+
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 100, 2000000 );
+				camera.position.set( 0, 10, 0 );				
+
+				scene = new THREE.Scene();
+
+				var helper = new THREE.GridHelper( 5000, 5000 );
+				helper.color1.setHex( 0xffffff );
+				helper.color2.setHex( 0xffffff );
+				scene.add( helper );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				controls = new THREE.StaticFirstPersonControls( camera, renderer.domElement );
+				
+
+				//controls = new THREE.OrbitControls( camera, renderer.domElement );
+				
+				controls.lookSpeed = 0.4;
+        		controls.movementSpeed = 10;
+        		controls.noFly = false;
+        		controls.lookVertical = true;
+        		controls.constrainVertical = true;
+        		controls.enableZoom = true;
+        		controls.minZoom = 100;
+        		//controls.zoomSpeed = 10;
+        		
+				//controls.addEventListener( 'change', render );
+				
+				//controls.maxPolarAngle = Math.PI / 2;
+				
+				initSky();
+
+				initSkyModel();
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				render();
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				
+				controls.handleResize();
+
+				render();
+
+			}
+
+			function render() {
+				renderer.render( scene, camera );				
+			}
+
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+				controls.update( clock.getDelta() );
+				stats.update();
+			}
+
+		</script>
+
+	</body>
+
+</html>
