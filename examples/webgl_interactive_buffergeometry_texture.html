@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - interactive - buffergeometry</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #cccccc;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:left;
+
+				background-color: #050505;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+			}
+		
+
+		</style>
+                <link rel="stylesheet" href="js/qtip-tooltip/jquery.qtip.css">
+	</head>
+	<body>
+
+		<div id="container"></div>
+
+		<script src="../build/three.min.js"></script>
+
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+        <script src="js/controls/OrbitControls.js"></script>
+                
+        <script src="models/nodes-data.js"></script>    
+                                
+        <script src="js/jquery/jquery-2.1.4.js"></script>
+        <script src="js/qtip-tooltip/jquery.qtip.js"></script>
+
+
+
+                
+        <script>
+
+        if ( ! Detector.webgl ) { 
+            Detector.addGetWebGLMessage() 
+        };
+
+        var container, stats;
+
+        var camera, scene, renderer;
+        
+
+        var raycaster, mouse, enableRaycaster = true;
+
+        var mesh, lines, selectedLine, r=25;
+        
+        var tooltip, qapi;
+        
+        var selectedMaterial, inactiveMaterial;
+        var intersect, controls;
+        var particleSystem;
+        var IPs, INTERSECTED, particles, texture;
+        var canvas;
+			
+			 
+        init();
+       
+
+        function init() {
+
+                container = document.getElementById( 'container' );
+
+                canvas = document.createElement('canvas');
+                
+                canvas.id     = "img";
+                //canvas.width  = 1224;
+                //canvas.height = 768;
+                canvas.style.zIndex   = 8;
+                canvas.style.overflow = "scroll";
+    
+                canvas.style.position = "absolute";
+                canvas.style.border   = "1px solid";
+                container.appendChild(canvas)
+
+
+                context = canvas.getContext("2d");
+                var earth = new Image();
+                earth.src = "textures/planets/earthmap10k.jpg";
+                
+                //canvas.addEventListenter("mouseup",)
+
+                earth.onload = function(){
+                    
+                    canvas.width  = earth.width;
+                    canvas.height = earth.height;
+
+                    //context.globalCompositeOperation = "destination-over";
+                    //context.drawImage(earth,0, 0, earth.width, earth.height, 0,0 ,canvas.width, canvas.height);
+
+                    var img = new Image();
+                    img.src = "images/particle-2.png";
+                    img.onload = function () {
+
+                        for (  var node in nodes ) {
+                            // positions
+                            var lat = nodes[node][8];
+                            var lon = nodes[node][9];
+                            var s= 1;
+                            var y = (1-(lat+90.0)/180.0)*canvas.height-s*img.height/2;
+                            var x = (lon+180.0)/360.0*canvas.width-s*img.width/2;
+
+                            
+                            context.drawImage(img, x, y, s*img.width, s*img.height);
+                            
+                        }                    
+                    }
+
+                }
+                
+/*
+                var img = new Image();
+                    img.src = "images/particle.png";
+                    img.onload = function () {
+
+                    for (  var node in nodes ) {
+                        // positions
+                        var lat = nodes[node][8];
+                        var lon = nodes[node][9];
+                        var s= 1;
+                        var y = (1-(lat+90.0)/180.0)*canvas.height-s*img.height/2;
+                        var x = (lon+180.0)/360.0*canvas.width-s*img.width/2;
+
+                        
+                        context.drawImage(img, x, y, s*img.width, s*img.height);
+                        
+                    }                    
+                }
+*/
+
+
+                var nodes = nodesData['nodes'];
+
+
+                
+
+                var linesNumber = nodesData['total_nodes'];
+                                    
+        
+
+                
+			}
+
+
+                function download() {
+                    var dt = canvas.toDataURL('image/jpeg');
+                    this.href = dt;
+                };
+
+            function onWindowResize() {
+
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+
+                    renderer.setSize( window.innerWidth, window.innerHeight );
+
+            }
+
+           
+
+            function onDocumentMouseMove( event ) {
+
+                    event.preventDefault();
+                    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+                    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+                    
+            }
+
+            function onDocumentMouseDown(event){
+                enableRaycaster = false;
+            }
+
+            function onDocumentMouseUp(){
+                enableRaycaster = true;
+            }
+    
+
+            var GeoLayer = function(filename, width, height, positions){
+                this.canvas = document.createElement('canvas');
+                
+                this.canvas.id     = filename;
+                this.canvas.width  = width;
+                this.canvas.height = height;
+                this.context = this.canvas.getContext('2d');
+                this.canvas.visibility = "hidden";                
+                this.canvas.style.position = "absolute";
+                
+                var image = new Image();
+                image.src = filename;
+
+                image.onload = function () {
+                    for ( var position in this.positions ){
+                        var lon = position[0];
+                        var lat = position[1];
+                        var x = (lon+180.0)/360.0 * this.canvas.width-image.width/2.0;
+                        var y = (1-(lat+90.0)/180.0) * this.canvas.height-image.height/2.0;
+                
+                        this.context.drawImage(image, x, y, image.width, image.height);
+                    }
+                }
+                
+            }
+
+            GeoLayer.prototype.getImage(){
+                return this.canvas.toDataURL("image/png");
+                //return this.context.getImageData().getData();
+            }
+
+
+    
+            function getNodeInfo(ip){
+                var nodes = nodesData['nodes'];                            
+                var node = nodes[ip];
+                /*
+                Protocol version
+                User agent
+                Connected since
+                Services
+                Height
+                Hostname
+                City
+                Country code
+                Latitude
+                Longitude
+                Timezone
+                ASN
+                Organization name
+                */
+                //"86.107.110.50:8333": [70002, "/Satoshi:0.11.1/", 1.446.012.293, 1, 381210, "86.107.110.50", null, "RO", 46.0, 25.0, "Europe/Bucharest", "AS8708", "RCS & RDS SA"]
+                var s = "<p><b>IP</b>: " + ip +"</p>";
+                s+= "<p><b>Version</b>: " + node[0] +"</p>";
+                s+= "<p><b>User agent</b>: " + node[1] +"</p>";
+                s+= "<p><b>Connected since</b>: " + new Date(node[2]*1000) +"</p>";
+                s+= "<p><b>Services</b>: " + node[3] +"</p>";
+                s+= "<p><b>Height</b>: " + node[4] +"</p>";
+                s+= "<p><b>Hostname</b>: " + node[5] +"</p>";
+                s+= "<p><b>City</b>: " + node[6] +"</p>";
+                s+= "<p><b>Country code</b>: " + node[7] +"</p>";
+                s+= "<p><b>Latitude</b>: " + node[8] +"</p>";
+                s+= "<p><b>Longitude</b>: " + node[9] +"</p>";
+                s+= "<p><b>Timezone</b>: " + node[10] +"</p>";
+                s+= "<p><b>ASN</b>: " + node[11] +"</p>";
+                s+= "<p><b>ISP</b>: " + node[12] +"</p>";
+                return s;
+            }
+    
+			
+
+		</script>
+
+	</body>
+</html>

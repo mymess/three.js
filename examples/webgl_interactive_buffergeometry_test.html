@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>TEST</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+
+			body {
+				color: #cccccc;
+				font-family:Monospace;
+				font-size: 13px;
+				text-align:center;
+
+				background-color: #050505;
+				margin: 0px;
+				overflow: hidden;				
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+			}
+		
+
+		</style>
+	</head>
+	<body>
+
+		<div id="container"></div>
+
+		<script src="../build/three.min.js"></script>
+
+		<script src="js/jquery/jquery-2.1.4.js"></script>
+
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+        <script src="js/controls/OrbitControls.js"></script>
+                
+        
+                
+                
+        <script type="x-shader/x-vertex" id="vertexShader">
+        	attribute float delta;        	
+        	uniform float amplitude;
+        	varying vec3 vNormal;
+
+			void main() {
+				vNormal = normal;
+
+				vec3 newPos = position + normal*vec3(delta*amplitude);
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( newPos, 1.0 );
+			}
+
+		</script>
+
+		<script type="x-shader/x-fragment" id="fragmentShader">
+
+			varying vec3 vNormal;
+
+			void main() {
+
+				vec3 light = vec3(0.5, 0.2, 1.0);
+				light = normalize(light);
+
+				float dProd = max(0.0, dot(vNormal, light));
+
+				gl_FragColor = vec4( dProd, dProd, dProd , 1.0 );
+				//gl_FragColor 	= vec4(1.0, 0.0,1.0,1.0);
+
+			}
+
+		</script>
+
+                
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+
+			var camera, scene, renderer;
+			var mouse;
+			var mesh;	      
+
+			var uniforms;  	        
+			
+
+			var width = window.innerWidth || 2;
+			var height = window.innerHeight || 2;
+
+			var windowHalfX = width / 2;
+			var windowHalfY = height / 2;
+
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.getElementById( 'container' );
+
+				// set some camera attributes
+				var VIEW_ANGLE = 45,
+				    ASPECT =  window.innerWidth / window.innerHeight,
+				    NEAR = 1,
+				    FAR = 1000;
+
+				
+
+				// create a WebGL renderer, camera
+				// and a scene
+				renderer = new THREE.WebGLRenderer();
+				camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR  );
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				scene = new THREE.Scene();
+
+
+				var light = new THREE.DirectionalLight(0xffffff);
+				light.position.x = 10;
+				light.position.y = 100;
+
+				scene.add(light);
+
+				scene.add( new THREE.AmbientLight( 0x444444 ) );
+
+				
+				camera.position.z = 130;
+
+				
+				// set up the sphere vars
+				var radius = 35, segments = 26, rings = 26;
+				
+				uniforms = {
+					amplitude: {type: "f", value: 1.0}
+				}
+
+				var shaderMaterial = new THREE.ShaderMaterial({				
+					uniforms: uniforms,
+					vertexShader:   document.getElementById('vertexShader').textContent,
+					fragmentShader: document.getElementById('fragmentShader').textContent
+				});
+
+				// create a new mesh with sphere geometry -
+				// we will cover the sphereMaterial next!
+				var geometry = new THREE.SphereBufferGeometry(radius, segments, rings);
+
+				var sphere = new THREE.Mesh(geometry, shaderMaterial);
+
+				var numVertices = geometry.attributes.position.count ;
+				var delta = new Float32Array( numVertices );
+				
+				for (var i = 0; i< numVertices; ++i){
+					delta[i]=Math.random()*20;
+				};
+
+				geometry.addAttribute( 'delta', new THREE.BufferAttribute(delta, 1));
+
+
+
+				
+				// add the sphere and camera to the scene
+				scene.add(sphere);
+
+				
+				scene.add(camera);
+
+				
+				renderer.render(scene, camera);
+				                               
+				//
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+
+
+  				document.body.appendChild( renderer.domElement );
+
+
+				//
+                controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.addEventListener( 'change', render );
+                                
+				window.addEventListener( 'resize', onWindowResize, false );
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function onDocumentMouseMove( event ) {
+
+				event.preventDefault();
+                                
+				//mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				//mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+			}
+
+         
+
+			function animate() {
+				render();
+				requestAnimationFrame( animate );
+				stats.update();
+
+			}
+	
+    
+			function render() {
+                var time = Date.now() * .01;
+				//renderer.render( scene, camera );          
+				uniforms.amplitude.value = .3*Math.abs(Math.sin(time));
+				renderer.clear();
+				renderer.render( scene, camera );
+    
+			}
+
+		</script>
+
+
+	</body>
+</html>
