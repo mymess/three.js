@@ -36,6 +36,8 @@
 
 		<script src="js/Detector.js"></script>
 		<script src="js/libs/stats.min.js"></script>
+        <script src="js/libs/dat.gui.min.js"></script>
+
         <script src="js/controls/OrbitControls.js"></script>
         
         <script src="js/libs/EffectComposer.js"></script>
@@ -57,16 +59,76 @@
 
 			var camera, scene, renderer;
 
-            var cameraBG, composer, sceneBG;                        
+            var cameraBG, composer, sceneBG, settings;                        
                         
 			var raycaster, mouse, enableRaycaster = true;
 
 			var mesh, lines, selectedLine, earthRadius=25;
-            var selectedMaterial, inactiveMaterial;
+            var selectedMaterial, inactiveMaterial, network;
             var intersect, controls, INTERSECTED, IPs;
+            var locations;
 
             var qapi, tooltip;
-                        
+            
+THREE.Arc = function(a, b, radius){
+    a.normalize();
+    b.normalize();
+
+    var normal = new THREE.Vector3();
+    normal.crossVectors( a, b );
+    
+    
+    if( normal.x == 0 && normal.y ==0 && normal.y==0){
+        normal.z = 1;
+    }
+
+    var angle = Math.atan2(normal.length(), a.dot(b))
+
+    var numSegments = 100;
+
+    var points = new Float32Array(3*(numSegments+1));
+    
+
+    for(var i=0; i<points.length; i+=3){
+        
+        points[i]   = radius*a.x;
+        points[i+1] = radius*a.y;
+        points[i+2] = radius*a.z;
+
+        a.applyAxisAngle( normal, angle/numSegments );      
+    }
+
+    
+
+    var geometry = new THREE.BufferGeometry();
+    
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( points, 3 ) );
+
+
+    var material = new THREE.LineBasicMaterial( { color : 0xff0000, linewidth: 1 } );
+
+    var line = new THREE.Line( geometry, material );
+    
+
+    return line;
+}
+
+function guiChanged(){
+    network.visible = settings.network;
+    renderer.render( scene, camera );
+}
+
+function drawArcs(){
+    network = new THREE.Group();
+    for( var i=0; i<locations.length-2; i+=3){
+        network.add( new THREE.Arc( locations[i], locations[i+1], earthRadius*1.01));
+        network.add( new THREE.Arc( locations[i], locations[i+2], earthRadius*1.01));
+        network.add( new THREE.Arc( locations[i+1], locations[i+2], earthRadius*1.01));
+    }
+    network.visible = settings.network;
+    scene.add(network);
+
+}
                         
 			init();
 			animate();
@@ -114,7 +176,9 @@
                 IPs = [];
 
                 var points = new Float32Array( linesNumber * 3);
-                                
+                
+                locations = [];
+
 				for (  var node in nodes ) {
 
 					// positions
@@ -125,7 +189,10 @@
                     var y  = earthRadius * Math.sin(lat);
                     var z  = earthRadius * Math.cos(lat)*Math.sin(lon);                                        					
 					
-					positions[ i ]     = 1.03*x;
+                    
+                    locations.push( new THREE.Vector3(x,y,z));
+					
+                    positions[ i ]     = 1.03*x;
 					positions[ i + 1 ] = 1.03*y;
 					positions[ i + 2 ] = 1.03*z;
 
@@ -155,6 +222,14 @@
                     i +=6;
 				}
 
+                //controls
+                var gui = new dat.GUI();
+                settings = {network: false}
+                gui.add(settings, "network").onChange(guiChanged);
+
+                
+                //draw arc lines
+                drawArcs();
                                 
 				
 				raycaster = new THREE.Raycaster();
@@ -235,6 +310,7 @@
                 */
 
 				// QTIP TOOLTIP
+                /*
                 renderer.domElement.id = "gfx";
                 tooltip = $("#gfx").qtip({
                     content: {
@@ -249,7 +325,7 @@
                 });
 
 				qapi = $('#gfx').data('qtip');
-                                
+                */              
 
                                 
 				//
@@ -257,10 +333,11 @@
 				stats = new Stats();
 				stats.domElement.style.position = 'absolute';
 				stats.domElement.style.top = '0px';
+                stats.domElement.style.left = '10px';
 				container.appendChild( stats.domElement );
 
 				//
-                                controls = new THREE.OrbitControls( camera, renderer.domElement );
+                controls = new THREE.OrbitControls( camera, renderer.domElement );
 				controls.addEventListener( 'change', render );
                                 
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -362,6 +439,7 @@
                          $("#gfx").qtip("hide");                        
                     } else 
                     */
+                    /*                    
                     if ( intersects.length > 0 && 
                     			intersects[0].point.z > 0 &&
                     			//intersects[0].index != INTERSECTED && 
@@ -380,19 +458,14 @@
 
 	                            var message = getNodeInfo( IPs[INTERSECTED] );
 
-	                            qapi.elements.content.html(message); 					
+	                            //qapi.elements.content.html(message); 					
 	                            //$("#gfx").qtip("show");								
-	                         /*   if($('.qtip:visible').length == 0){
+	                           if($('.qtip:visible').length == 0){
 	                                $("#gfx").qtip("show");
-	                            }*/
+	                            }
 	                        }
                             
                             
-                            /*
-                            selectedLine.geometry.vertices[1].x = v.x;
-                            selectedLine.geometry.vertices[1].y = v.y;
-                            selectedLine.geometry.vertices[1].z = v.z;
-                            */
                             
                             selectedLine.geometry.verticesNeedUpdate= true;
                             selectedLine.material = selectedMaterial;
@@ -400,7 +473,7 @@
                                                                                                                                                
                     } else if(intersects.length == 0 || intersects.length > 0 && intersects[0].point.length() < earthRadius ){
                     	if($('.qtip:visible').length > 0){
-                    	 $("#gfx").qtip("hide");           
+                    	 //$("#gfx").qtip("hide");           
                     	 }             
                     } 
                     /*else{
